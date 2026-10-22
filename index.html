@@ -38,6 +38,19 @@
     --radius-sm: 8px;
     --glow: 0 0 20px rgba(124,106,247,0.15);
   }
+  /* ── LIGHT MODE ── */
+  body.light-mode {
+    --bg: #f4f3ff;
+    --bg2: #ffffff;
+    --bg3: #ede9fe;
+    --bg4: #ddd6fe;
+    --text: #1a1830;
+    --text2: #5b5280;
+    --text3: #9990b8;
+    --border: rgba(124,106,247,0.18);
+    --border2: rgba(124,106,247,0.35);
+    --glow: 0 0 20px rgba(124,106,247,0.08);
+  }
   * { box-sizing:border-box; margin:0; padding:0; }
   body {
     font-family: 'Segoe UI', system-ui, sans-serif;
@@ -203,6 +216,7 @@
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.8);
     z-index: 200; display: none; align-items: flex-end;
+    -webkit-tap-highlight-color: transparent;
   }
   .modal-overlay.open { display: flex; }
   .modal {
@@ -210,6 +224,7 @@
     border-top: 1px solid var(--border); padding: 20px 16px 30px;
     width: 100%; max-height: 90vh; overflow-y: auto;
     animation: slideUp 0.3s ease;
+    -webkit-overflow-scrolling: touch;
   }
   @keyframes slideUp { from { transform: translateY(100%); } }
   .modal-handle {
@@ -314,6 +329,15 @@
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  /* 터치 최적화 */
+  button, .btn-primary, .btn-secondary, .slot-btn, .nav-item, .icon-btn, .tab, .toggle-switch, .color-dot {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  .btn-primary { min-height: 44px; }
+  .btn-secondary { min-height: 44px; }
+  .slot-btn { min-width: 36px; min-height: 36px; }
 </style>
 </head>
 <body>
@@ -363,6 +387,7 @@
 <div class="app-header">
   <div class="app-title">⏱ 원시간표</div>
   <div class="header-right">
+    <div class="icon-btn" id="themeToggleBtn" onclick="toggleLightMode()" title="화면 밝기 전환"><i class="ti ti-sun"></i></div>
     <div class="icon-btn" onclick="openSettings()" title="설정"><i class="ti ti-settings"></i></div>
     <div class="icon-btn" onclick="openShare()" title="공유"><i class="ti ti-share"></i></div>
     <div class="icon-btn" onclick="openAlarmModal()" title="알람"><i class="ti ti-bell"></i></div>
@@ -416,7 +441,7 @@
   <div class="section-title"><i class="ti ti-calendar" style="font-size:16px"></i> 오늘의 시간표</div>
   <div class="time-grid" id="timetableGrid"></div>
   <div style="margin-top:10px">
-    <button class="btn-primary" onclick="openAddSlot()"><i class="ti ti-plus"></i> 일정 추가</button>
+    <button class="btn-primary" id="addSlotBtn"><i class="ti ti-plus"></i> 일정 추가</button>
   </div>
 </div>
 
@@ -1595,6 +1620,36 @@ if (isInStandalone) {
 // URL 해시로 탭 이동 (shortcuts 지원)
 const hash = location.hash.replace('#','');
 if (['home','analytics','ranking','settings'].includes(hash)) goPage(hash);
+
+// ═══════════════════════════════════════
+//  LIGHT / DARK MODE TOGGLE
+// ═══════════════════════════════════════
+function toggleLightMode() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('lightMode', isLight ? '1' : '0');
+  const btn = document.getElementById('themeToggleBtn');
+  btn.innerHTML = isLight
+    ? '<i class="ti ti-moon"></i>'
+    : '<i class="ti ti-sun"></i>';
+}
+// 저장된 모드 불러오기
+if (localStorage.getItem('lightMode') === '1') {
+  document.body.classList.add('light-mode');
+  document.getElementById('themeToggleBtn').innerHTML = '<i class="ti ti-moon"></i>';
+}
+
+// ═══════════════════════════════════════
+//  버튼 이벤트 — 터치 기기 호환
+// ═══════════════════════════════════════
+(function bindButtons() {
+  function safeBind(id, fn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e) { e.preventDefault(); fn(); });
+  }
+  safeBind('addSlotBtn', () => openAddSlot());
+})();
 </script>
 </body>
 </html>
