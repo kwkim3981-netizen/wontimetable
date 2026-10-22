@@ -1330,7 +1330,7 @@ async function renderRanking() {
     if (currentRankTab==='achievement') { val=e.achievement+'%'; sub='달성률'; }
     else if (currentRankTab==='time') { val=Math.floor(e.totalMin/60)+'h '+e.totalMin%60+'m'; sub='총 시간'; }
     else { val=e.streak+'일'; sub='연속 달성'; }
-    return `<div class="rank-item ${rankClass}${isMe?' 'style='border-color:var(--accent2);background:rgba(167,139,250,0.08)'':''}">
+    return `<div class="rank-item ${rankClass}" style="${isMe?'border-color:var(--accent2);background:rgba(167,139,250,0.08)':''}">
       <div class="rank-num">${medal||'#'+(i+1)}</div>
       <div class="rank-info">
         <div class="rank-name">${e.nickname}${isMe?' <span class="badge badge-accent">나</span>':''}</div>
