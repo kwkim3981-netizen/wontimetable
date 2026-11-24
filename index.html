@@ -243,8 +243,8 @@ button,.btn{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   <div id="homeWidgets"></div>
   <div class="sh"><div class="shl"><i class="ti ti-calendar" style="font-size:16px;color:var(--accent2)"></i> 오늘의 일과</div><div style="font-size:11px;color:var(--text3)" id="todaylabel"></div></div>
   <div id="todaylist"></div>
-  <div class="sh" style="margin-top:14px"><div class="shl"><i class="ti ti-table" style="font-size:16px;color:var(--accent2)"></i> 원시간표 (오늘)</div><div style="font-size:11px;color:var(--text3)" id="ttlabel2"></div></div>
-  <div id="hometimetable"></div>
+  <div class="sh" style="margin-top:14px"><div class="shl"><i class="ti ti-clock-hour-4" style="font-size:16px;color:var(--accent2)"></i> 원시간표</div><div style="font-size:11px;color:var(--text3)" id="ttlabel2"></div></div>
+  <div id="hometimetable" style="display:flex;flex-direction:column;align-items:center"></div>
   <div class="sh" style="margin-top:14px"><div class="shl"><i class="ti ti-clock" style="font-size:16px;color:var(--accent2)"></i> 다음 일정</div></div>
   <div id="upcoming"></div>
 </div></div>
@@ -268,6 +268,10 @@ button,.btn{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
     <div class="cnav" onclick="chw(-1)">‹</div>
     <div style="font-size:14px;font-weight:700" id="weeklabel"></div>
     <div class="cnav" onclick="chw(1)">›</div>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <div class="cmbtn on" id="wkv-time" onclick="swkv('time')">⏱ 시간축</div>
+    <div class="cmbtn" id="wkv-grid" onclick="swkv('grid')">📋 격자형</div>
   </div>
   <div id="weekcal"></div>
 </div></div>
@@ -508,23 +512,92 @@ function rHome(){
 function rHomeTT(){
   const el=document.getElementById('hometimetable');
   const lbl=document.getElementById('ttlabel2');
-  const now=hm(new Date());
-  const es=getDayEvs(tstr());
-  if(lbl)lbl.textContent=new Date().toLocaleDateString('ko-KR',{weekday:'long'});
+  const now=new Date();
+  const es=getDayEvs(tstr()).filter(e=>e.start&&e.end);
+  if(lbl)lbl.textContent=now.toLocaleDateString('ko-KR',{weekday:'long'});
   if(!es.length){el.innerHTML='<div class="empty" style="padding:10px 0;font-size:12px"><i class="ti ti-calendar-off"></i> 오늘 시간표가 없어요</div>';return;}
-  // compact horizontal scroll timetable
-  el.innerHTML=`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">${es.map(e=>{
-    const isnow=e.start&&e.end&&now>=e.start&&now<e.end;
-    const ispast=e.end&&now>=e.end;
-    const dur=e.start&&e.end?h2m(e.end)-h2m(e.start):0;
-    return`<div onclick="showEv('${e.id}')" style="flex:0 0 auto;min-width:76px;border-radius:10px;padding:8px 10px;background:${isnow?e.color||'var(--accent)':'var(--bg3)'};border:2px solid ${isnow?e.color||'var(--accent)':'var(--border)'};cursor:pointer;position:relative;overflow:hidden">
-      ${ispast&&!isnow?`<div style="position:absolute;inset:0;background:rgba(255,255,255,.45);border-radius:8px"></div>`:''}
-      <div style="font-size:9px;color:${isnow?'rgba(255,255,255,.8)':'var(--text3)'};margin-bottom:3px">${e.start||''}</div>
-      <div style="font-size:12px;font-weight:700;color:${isnow?'white':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
-      <div style="font-size:9px;color:${isnow?'rgba(255,255,255,.7)':'var(--text3)'};margin-top:2px">${Math.floor(dur/60)?Math.floor(dur/60)+'h ':''}${dur%60?dur%60+'m':''}</div>
-      ${isnow?`<div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.5);border-radius:0 0 8px 8px"></div>`:''}
-    </div>`;
-  }).join('')}</div>`;
+  // 원형 시계 시간표 (스마트워치 스타일)
+  const W=300,CX=150,CY=150,R=120,RI=65,RTEXT=100;
+  const SH=5,EH=23,TOTAL=(EH-SH)*60; // 05:00 ~ 23:00 = 18h
+  const nowMin=(now.getHours()-SH)*60+now.getMinutes();
+  const deg2rad=d=>d*Math.PI/180;
+  const minToAngle=m=>(m/TOTAL)*360-90; // -90 = 12시 방향 시작
+  function arc(cx,cy,r,startMin,endMin,color,inner,clickId){
+    const sa=minToAngle(startMin),ea=minToAngle(endMin);
+    const r2=inner||RI+4;
+    const x1=cx+r*Math.cos(deg2rad(sa)),y1=cy+r*Math.sin(deg2rad(sa));
+    const x2=cx+r*Math.cos(deg2rad(ea)),y2=cy+r*Math.sin(deg2rad(ea));
+    const ix1=cx+r2*Math.cos(deg2rad(ea)),iy1=cy+r2*Math.sin(deg2rad(ea));
+    const ix2=cx+r2*Math.cos(deg2rad(sa)),iy2=cy+r2*Math.sin(deg2rad(sa));
+    const large=(endMin-startMin)/TOTAL*360>180?1:0;
+    return`<path d="M${x1},${y1} A${r},${r},0,${large},1,${x2},${y2} L${ix1},${iy1} A${r2},${r2},0,${large},0,${ix2},${iy2} Z" fill="${color}" opacity=".92" style="cursor:pointer" onclick="showEv('${clickId}')"><title>${''}</title></path>`;
+  }
+  // 눈금선 & 시간 레이블
+  let ticks='',labels='';
+  for(let h=SH;h<EH;h++){
+    const m=(h-SH)*60,ang=minToAngle(m),r2=deg2rad(ang);
+    const isMaj=h%3===0;
+    const r3=isMaj?R-2:R-5;
+    ticks+=`<line x1="${CX+RI*Math.cos(r2)}" y1="${CY+RI*Math.sin(r2)}" x2="${CX+r3*Math.cos(r2)}" y2="${CY+r3*Math.sin(r2)}" stroke="rgba(0,0,0,0.12)" stroke-width="${isMaj?1.5:0.7}"/>`;
+    if(isMaj){
+      const lr=R+13,lx=CX+lr*Math.cos(r2),ly=CY+lr*Math.sin(r2);
+      labels+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="var(--text3)" font-weight="600">${h}</text>`;
+    }
+  }
+  // 현재 시간 바늘
+  const nowAng=minToAngle(Math.max(0,Math.min(nowMin,TOTAL)));
+  const nrad=deg2rad(nowAng);
+  const needleLine=nowMin>=0&&nowMin<=TOTAL?`<line x1="${CX}" y1="${CY}" x2="${CX+R*Math.cos(nrad)}" y2="${CY+R*Math.sin(nrad)}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/><circle cx="${CX}" cy="${CY}" r="4" fill="var(--red)"/>`:'' ;
+  // 슬라이스 그리기
+  const slices=es.map(e=>{
+    const sm=h2m(e.start)-SH*60,em=h2m(e.end)-SH*60;
+    if(em<=0||sm>=TOTAL)return'';
+    const clampS=Math.max(0,sm),clampE=Math.min(TOTAL,em);
+    if(clampE<=clampS)return'';
+    return arc(CX,CY,R,clampS,clampE,e.color||'#6c63ff',null,e.id);
+  }).join('');
+  // 텍스트 레이블 (큰 호에만)
+  const textLabels=es.map(e=>{
+    const sm=h2m(e.start)-SH*60,em=h2m(e.end)-SH*60;
+    const dur=em-sm;if(dur<30)return''; // 너무 짧으면 생략
+    const midMin=(Math.max(0,sm)+Math.min(TOTAL,em))/2;
+    const midAng=minToAngle(midMin);
+    const r2=deg2rad(midAng);
+    const tr=(RI+R)/2;
+    const tx=CX+tr*Math.cos(r2),ty=CY+tr*Math.sin(r2);
+    // 텍스트 회전: 호의 접선 방향
+    const rot=midAng+90;
+    const name=e.name.length>5?e.name.substring(0,4)+'…':e.name;
+    return`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="${dur>=60?10:9}" font-weight="700" fill="white" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.4)">${name}</text>`;
+  }).join('');
+  // 중앙 시계
+  const curEv=es.find(e=>{const sm=h2m(e.start),em=h2m(e.end),nm=now.getHours()*60+now.getMinutes();return nm>=sm&&nm<em;});
+  const centerText=curEv
+    ?`<text x="${CX}" y="${CY-10}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent2)">${curEv.name.length>6?curEv.name.substring(0,5)+'…':curEv.name}</text><text x="${CX}" y="${CY+7}" text-anchor="middle" font-size="10" fill="var(--text3)">~${curEv.end}</text>`
+    :`<text x="${CX}" y="${CY-6}" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent2)">${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</text>`;
+  // 범례
+  const legend=es.map(e=>`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);flex:0 0 auto"><div style="width:8px;height:8px;border-radius:2px;background:${e.color||'#6c63ff'};flex-shrink:0"></div>${e.name}</div>`).join('');
+  el.innerHTML=`
+    <div style="position:relative;width:${W}px;height:${W}px;max-width:100%">
+      <svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" style="overflow:visible">
+        <!-- 배경 링 -->
+        <circle cx="${CX}" cy="${CY}" r="${R}" fill="var(--bg3)" stroke="var(--border2)" stroke-width="1.5"/>
+        <circle cx="${CX}" cy="${CY}" r="${RI}" fill="var(--bg2)"/>
+        <!-- 슬라이스 -->
+        ${slices}
+        <!-- 눈금 & 시간 -->
+        ${ticks}${labels}
+        <!-- 중앙 -->
+        ${centerText}
+        <!-- 현재 시간 바늘 -->
+        ${needleLine}
+      </svg>
+      <!-- 워치 외형 -->
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;margin-top:12px;max-width:300px">${legend}</div>
+  `;
+  // 애니메이션: 슬라이스 등장
+  el.querySelectorAll('path').forEach((p,i)=>{p.style.opacity='0';p.style.transition=`opacity .3s ${i*0.05}s`;setTimeout(()=>p.style.opacity='.92',10);});
 }
 function updNow(){
   const now=new Date(),hmn=hm(now);
@@ -648,10 +721,21 @@ function rCalDetail(ds){
 function quickForDay(ds){openAddEvent();setTimeout(()=>{document.getElementById('evdate').value=ds;document.getElementById('evrepeat').value='none';},80);}
 
 // WEEK
+let weekViewMode='time'; // 'time' | 'grid'
+function swkv(m){
+  weekViewMode=m;
+  document.getElementById('wkv-time').classList.toggle('on',m==='time');
+  document.getElementById('wkv-grid').classList.toggle('on',m==='grid');
+  rWeek();
+}
 function rWeek(){
   if(!S.weekStart)S.weekStart=getWS(new Date());
   const ws=S.weekStart,we=addD(ws,6);
   document.getElementById('weeklabel').textContent=`${ws.toLocaleDateString('ko-KR',{month:'short',day:'numeric'})} – ${we.toLocaleDateString('ko-KR',{month:'short',day:'numeric'})}`;
+  if(weekViewMode==='grid')return rWeekGrid(ws,we);
+  rWeekTime(ws,we);
+}
+function rWeekTime(ws,we){
   const con=document.getElementById('weekcal');con.innerHTML='';
   const hdr=document.createElement('div');hdr.className='whead';
   hdr.innerHTML='<div></div>'+Array.from({length:7},(_,i)=>{const d=addD(ws,i);const it=fmt(d)===tstr();return`<div class="wch${it?' today-col':''}"><span class="wd">${DK[d.getDay()]}</span><span class="wdate">${d.getDate()}</span></div>`;}).join('');
@@ -682,6 +766,37 @@ function rWeek(){
     const nl=document.createElement('div');nl.className='wnl';nl.style.top=(nm/60*HH)+'px';nl.innerHTML='<div class="wnldot"></div>';ov.appendChild(nl);
   }
   grid.appendChild(ov);con.appendChild(grid);
+}
+function rWeekGrid(ws,we){
+  // 가로형: 요일이 가로, 시간이 세로 카드
+  const con=document.getElementById('weekcal');con.innerHTML='';
+  // 각 요일별 일정 카드 가로 스크롤
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;';
+  const today=tstr();
+  Array.from({length:7},(_,i)=>{
+    const d=addD(ws,i);const ds=fmt(d);
+    const isToday=ds===today;
+    const es=getDayEvs(ds);
+    const col=document.createElement('div');
+    col.style.cssText=`flex:0 0 110px;background:${isToday?'rgba(108,99,255,.08)':'var(--bg3)'};border:1.5px solid ${isToday?'var(--accent)':'var(--border)'};border-radius:12px;padding:8px;`;
+    const dHead=document.createElement('div');
+    dHead.style.cssText=`text-align:center;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)`;
+    dHead.innerHTML=`<div style="font-size:11px;font-weight:700;color:${isToday?'var(--accent2)':'var(--text2)'}">${DK[d.getDay()]}</div><div style="font-size:18px;font-weight:800;color:${isToday?'var(--accent)':'var(--text)'}">${d.getDate()}</div>`;
+    col.appendChild(dHead);
+    if(!es.length){
+      const emp=document.createElement('div');emp.style.cssText='font-size:10px;color:var(--text3);text-align:center;padding:8px 0';emp.textContent='없음';col.appendChild(emp);
+    } else {
+      es.forEach(ev=>{
+        const ev2=document.createElement('div');
+        ev2.style.cssText=`border-radius:6px;padding:5px 6px;margin-bottom:4px;background:${ev.color||'var(--accent)'}22;border-left:3px solid ${ev.color||'var(--accent)'};cursor:pointer;`;
+        ev2.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${ev.name}</div><div style="font-size:9px;color:var(--text3);margin-top:1px">${ev.start||''}${ev.end?' ~'+ev.end:''}</div>`;
+        ev2.onclick=()=>showEv(ev.id);col.appendChild(ev2);
+      });
+    }
+    row.appendChild(col);
+  });
+  con.appendChild(row);
 }
 function chw(d){S.weekStart=addD(S.weekStart||getWS(new Date()),d*7);rWeek();}
 
