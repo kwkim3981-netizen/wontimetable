@@ -243,7 +243,13 @@ button,.btn{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   <div id="homeWidgets"></div>
   <div class="sh"><div class="shl"><i class="ti ti-calendar" style="font-size:16px;color:var(--accent2)"></i> 오늘의 일과</div><div style="font-size:11px;color:var(--text3)" id="todaylabel"></div></div>
   <div id="todaylist"></div>
-  <div class="sh" style="margin-top:14px"><div class="shl"><i class="ti ti-clock-hour-4" style="font-size:16px;color:var(--accent2)"></i> 원시간표</div><div style="font-size:11px;color:var(--text3)" id="ttlabel2"></div></div>
+  <div class="sh" style="margin-top:14px">
+    <div class="shl"><i class="ti ti-clock-hour-4" style="font-size:16px;color:var(--accent2)"></i> 원시간표</div>
+    <div style="display:flex;gap:5px">
+      <div class="cmbtn on" id="clkv-watch" onclick="sclkv('watch')" style="padding:4px 10px;font-size:11px">⌚ 워치형</div>
+      <div class="cmbtn" id="clkv-pie" onclick="sclkv('pie')" style="padding:4px 10px;font-size:11px">🕐 원형</div>
+    </div>
+  </div>
   <div id="hometimetable" style="display:flex;flex-direction:column;align-items:center"></div>
   <div class="sh" style="margin-top:14px"><div class="shl"><i class="ti ti-clock" style="font-size:16px;color:var(--accent2)"></i> 다음 일정</div></div>
   <div id="upcoming"></div>
@@ -504,6 +510,14 @@ function gv(v){
   else if(v==='settings')rSettings();
 }
 
+let clockViewMode='watch'; // 'watch' | 'pie'
+function sclkv(m){
+  clockViewMode=m;
+  document.getElementById('clkv-watch').classList.toggle('on',m==='watch');
+  document.getElementById('clkv-pie').classList.toggle('on',m==='pie');
+  rHomeTT();
+}
+
 // HOME
 function rHome(){
   updNow();rWidgets();rTodayList();rHomeTT();rUpcoming();
@@ -604,19 +618,156 @@ function rHomeTT(){
   const es=getDayEvs(tstr()).filter(e=>e.start&&e.end);
   if(lbl)lbl.textContent=now.toLocaleDateString('ko-KR',{weekday:'long'});
   if(!es.length){el.innerHTML='<div class="empty" style="padding:10px 0;font-size:12px"><i class="ti ti-calendar-off"></i> 오늘 시간표가 없어요</div>';return;}
-  // 오전(0~12), 오후(12~24) — 12시간씩
-  const amEvs=es.filter(e=>h2m(e.start)<720); // ~12:00
-  const pmEvs=es.filter(e=>h2m(e.end)>720);   // 12:00~
+  if(clockViewMode==='watch'){rWatchTT(el,es,now);}
+  else{rPieTT(el,es,now);}
+}
+
+function rPieTT(el,es,now){
+  // 기존 오전/오후 2개 원형
+  const amEvs=es.filter(e=>h2m(e.start)<720);
+  const pmEvs=es.filter(e=>h2m(e.end)>720);
   const amSVG=makeClock(amEvs,0,12,'🌅 오전',now);
   const pmSVG=makeClock(pmEvs,12,24,'🌇 오후',now);
-  // 범례
   const legend=es.map(e=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><div style="width:7px;height:7px;border-radius:2px;background:${e.color||'#6c63ff'};flex-shrink:0"></div>${e.name}</div>`).join('');
   el.innerHTML=`
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:4px 0">
-      ${amSVG}${pmSVG}
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:4px 0">${amSVG}${pmSVG}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;margin-top:10px;max-width:360px;padding:0 4px">${legend}</div>`;
+}
+
+function rWatchTT(el,es,now){
+  // 워치형: 큰 디지털 시계 + 그 아래 원형 시간표 오전/오후
+  const hStr=String(now.getHours()).padStart(2,'0');
+  const mStr=String(now.getMinutes()).padStart(2,'0');
+  const sStr=String(now.getSeconds()).padStart(2,'0');
+  const curEv=es.find(e=>{const sm=h2m(e.start),em=h2m(e.end),nm=now.getHours()*60+now.getMinutes();return nm>=sm&&nm<em;});
+  const nextEv=es.find(e=>e.start&&(now.getHours()*60+now.getMinutes())<h2m(e.start));
+  const dateStr=now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+
+  // 워치 외형 SVG (원형 시계 + 현재시각 + 스케줄 링)
+  const W=280,CX=140,CY=140;
+  const ROUT=130,RRING=108,RRIN=80,RCENTER=72;
+  const deg2rad=d=>d*Math.PI/180;
+  const minToAngle=m=>(m/720)*360-90; // 12시간=720분 기준
+  function arc12(sm,em,color,clickId){
+    // 12시간 기준 클램핑
+    const clampS=Math.max(0,sm),clampE=Math.min(720,em);
+    if(clampE<=clampS)return'';
+    const sa=minToAngle(clampS),ea=minToAngle(clampE);
+    const r2=RRIN;
+    const x1=CX+RRING*Math.cos(deg2rad(sa)),y1=CY+RRING*Math.sin(deg2rad(sa));
+    const x2=CX+RRING*Math.cos(deg2rad(ea)),y2=CY+RRING*Math.sin(deg2rad(ea));
+    const ix1=CX+r2*Math.cos(deg2rad(ea)),iy1=CY+r2*Math.sin(deg2rad(ea));
+    const ix2=CX+r2*Math.cos(deg2rad(sa)),iy2=CY+r2*Math.sin(deg2rad(sa));
+    const large=(clampE-clampS)/720*360>=180?1:0;
+    return`<path d="M${x1},${y1} A${RRING},${RRING},0,${large},1,${x2},${y2} L${ix1},${iy1} A${RRIN},${RRIN},0,${large},0,${ix2},${iy2} Z" fill="${color}" opacity=".88" style="cursor:pointer" onclick="showEv('${clickId}')"/>`;
+  }
+  function sliceLabel12(sm,em,name){
+    const clampS=Math.max(0,sm),clampE=Math.min(720,em);
+    const dur=clampE-clampS;if(dur<20)return'';
+    const mid=(clampS+clampE)/2,ang=minToAngle(mid),r2=deg2rad(ang);
+    const tr=(RRIN+RRING)/2;
+    const tx=CX+tr*Math.cos(r2),ty=CY+tr*Math.sin(r2);
+    const n=name.length>4?name.substring(0,3)+'…':name;
+    return`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="${dur>=60?9:7.5}" font-weight="800" fill="white" transform="rotate(${ang+90},${tx},${ty})" style="pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">${n}</text>`;
+  }
+  // 오전 링 (AM: 0~12h → 0~720분)
+  const amSlices=es.map(e=>{const sm=h2m(e.start),em=h2m(e.end);return arc12(sm,em,e.color||'#6c63ff',e.id);}).join('');
+  const amTexts=es.map(e=>{const sm=h2m(e.start),em=h2m(e.end);return sliceLabel12(sm,em,e.name);}).join('');
+  // 오후 링 (PM: 12~24h → 오후분 = 원래분-720)
+  function arc12pm(sm,em,color,clickId){
+    const pms=sm-720,pme=em-720;
+    return arc12(pms,pme,color,clickId);
+  }
+  function slLabel12pm(sm,em,name){
+    const pms=sm-720,pme=em-720;return sliceLabel12(pms,pme,name);}
+  // 오후는 바깥쪽 링 (ROUT 활용)
+  const RPO=ROUT-2,RPI=RRING+3;
+  function arcPM(sm,em,color,clickId){
+    const pms=Math.max(0,sm-720),pme=Math.min(720,em-720);
+    if(pme<=pms)return'';
+    const sa=minToAngle(pms),ea=minToAngle(pme);
+    const x1=CX+RPO*Math.cos(deg2rad(sa)),y1=CY+RPO*Math.sin(deg2rad(sa));
+    const x2=CX+RPO*Math.cos(deg2rad(ea)),y2=CY+RPO*Math.sin(deg2rad(ea));
+    const ix1=CX+RPI*Math.cos(deg2rad(ea)),iy1=CY+RPI*Math.sin(deg2rad(ea));
+    const ix2=CX+RPI*Math.cos(deg2rad(sa)),iy2=CY+RPI*Math.sin(deg2rad(sa));
+    const large=(pme-pms)/720*360>=180?1:0;
+    return`<path d="M${x1},${y1} A${RPO},${RPO},0,${large},1,${x2},${y2} L${ix1},${iy1} A${RPI},${RPI},0,${large},0,${ix2},${iy2} Z" fill="${color}" opacity=".75" style="cursor:pointer" onclick="showEv('${clickId}')"/>`;
+  }
+  function arcPMlabel(sm,em,name){
+    const pms=Math.max(0,sm-720),pme=Math.min(720,em-720);
+    const dur=pme-pms;if(dur<20)return'';
+    const mid=(pms+pme)/2,ang=minToAngle(mid),r2=deg2rad(ang);
+    const tr=(RPI+RPO)/2;
+    const tx=CX+tr*Math.cos(r2),ty=CY+tr*Math.sin(r2);
+    const n=name.length>3?name.substring(0,2)+'…':name;
+    return`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-weight="800" fill="white" transform="rotate(${ang+90},${tx},${ty})" style="pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))">${n}</text>`;
+  }
+  const pmSlices=es.map(e=>arcPM(h2m(e.start),h2m(e.end),e.color||'#6c63ff',e.id)).join('');
+  const pmTexts=es.map(e=>arcPMlabel(h2m(e.start),h2m(e.end),e.name)).join('');
+  // 시간 눈금
+  let ticks='';
+  for(let i=0;i<12;i++){
+    const ang=i*30-90,r2=deg2rad(ang);
+    const isMaj=i%3===0;
+    ticks+=`<line x1="${CX+RRING*Math.cos(r2)}" y1="${CY+RRING*Math.sin(r2)}" x2="${CX+(RRIN)*Math.cos(r2)}" y2="${CY+(RRIN)*Math.sin(r2)}" stroke="rgba(100,80,200,0.15)" stroke-width="${isMaj?1.5:0.7}"/>`;
+    if(isMaj){const h12=i===0?12:i;const lr=RRING+14,lx=CX+lr*Math.cos(r2),ly=CY+lr*Math.sin(r2);ticks+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="rgba(90,70,180,0.5)" font-weight="700">${h12}</text>`;}
+  }
+  // 현재시간 바늘 (AM 기준 12시간)
+  const nowTotalMin=now.getHours()*60+now.getMinutes();
+  const nowAM=nowTotalMin%720;
+  const nowAng=minToAngle(nowAM);
+  const nrad=deg2rad(nowAng);
+  const needle=`<line x1="${CX}" y1="${CY}" x2="${CX+(RRING-6)*Math.cos(nrad)}" y2="${CY+(RRING-6)*Math.sin(nrad)}" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round"/><circle cx="${CX}" cy="${CY}" r="5" fill="#e11d48"/><circle cx="${CX}" cy="${CY}" r="2" fill="white"/>`;
+
+  el.innerHTML=`
+    <div style="position:relative;display:inline-flex;flex-direction:column;align-items:center">
+      <!-- 워치 본체 -->
+      <div style="background:linear-gradient(145deg,#2a2040,#1a1530);border-radius:36px;padding:10px;box-shadow:0 8px 32px rgba(60,40,120,0.35),0 2px 8px rgba(0,0,0,0.2);border:2px solid rgba(120,100,220,0.3)">
+        <!-- 워치 화면 -->
+        <div style="background:linear-gradient(160deg,#f8f6ff,#ede8ff);border-radius:26px;overflow:hidden;position:relative">
+          <svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">
+            <!-- 배경 -->
+            <circle cx="${CX}" cy="${CY}" r="${ROUT+2}" fill="url(#watchbg)"/>
+            <defs>
+              <radialGradient id="watchbg" cx="40%" cy="35%"><stop offset="0%" stop-color="#f8f5ff"/><stop offset="100%" stop-color="#e8e0ff"/></radialGradient>
+            </defs>
+            <!-- 외부 AM 링 배경 -->
+            <circle cx="${CX}" cy="${CY}" r="${ROUT}" fill="none" stroke="rgba(108,99,255,0.08)" stroke-width="${ROUT-RPI+1}"/>
+            <!-- 내부 AM 링 배경 -->
+            <circle cx="${CX}" cy="${CY}" r="${(RRING+RRIN)/2}" fill="none" stroke="rgba(108,99,255,0.06)" stroke-width="${RRING-RRIN}"/>
+            <!-- PM 슬라이스 (바깥 링) -->
+            ${pmSlices}${pmTexts}
+            <!-- AM 슬라이스 (안쪽 링) -->
+            ${amSlices}${amTexts}
+            <!-- 눈금 -->
+            ${ticks}
+            <!-- 링 구분선 -->
+            <circle cx="${CX}" cy="${CY}" r="${RRING+1}" fill="none" stroke="rgba(108,99,255,0.12)" stroke-width="1.5"/>
+            <circle cx="${CX}" cy="${CY}" r="${RRIN-1}" fill="none" stroke="rgba(108,99,255,0.1)" stroke-width="1"/>
+            <!-- 중앙 흰 원 -->
+            <circle cx="${CX}" cy="${CY}" r="${RCENTER}" fill="white" stroke="rgba(108,99,255,0.1)" stroke-width="1.5"/>
+            <!-- 현재 시간 바늘 -->
+            <path id="watch-needle" d="M${CX},${CY} L${(CX+(RRING-6)*Math.cos(nrad)).toFixed(1)},${(CY+(RRING-6)*Math.sin(nrad)).toFixed(1)}" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="${CX}" cy="${CY}" r="5" fill="#e11d48"/><circle cx="${CX}" cy="${CY}" r="2" fill="white"/>
+            <!-- 중앙 디지털 시계 -->
+            <text id="watch-time" x="${CX}" y="${CY-18}" text-anchor="middle" font-size="26" font-weight="900" fill="#2a1a60" font-family="monospace" letter-spacing="-1">${hStr}:${mStr}</text>
+            <text id="watch-sec" x="${CX}" y="${CY+2}" text-anchor="middle" font-size="11" font-weight="700" fill="#9990b8">${sStr}초</text>
+            <text x="${CX}" y="${CY+18}" text-anchor="middle" font-size="9" fill="${curEv?curEv.color||'var(--accent)':'#b0a8d0'}" font-weight="700">${curEv?curEv.name.substring(0,8)+(curEv.name.length>8?'…':''):dateStr}</text>
+            ${curEv?`<text x="${CX}" y="${CY+30}" text-anchor="middle" font-size="8" fill="#9990b8">~${curEv.end}</text>`:''}
+            <!-- AM/PM 라벨 -->
+            <text x="${CX-RRING-4}" y="${CY+2}" text-anchor="end" font-size="7" fill="rgba(90,70,180,0.5)" font-weight="700">AM</text>
+            <text x="${CX+RRING+4}" y="${CY+2}" text-anchor="start" font-size="7" fill="rgba(90,70,180,0.35)" font-weight="700">PM</text>
+          </svg>
+        </div>
+      </div>
+      <!-- 워치 밴드 -->
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;margin-top:10px;max-width:360px;padding:0 4px">${legend}</div>
-  `;
+    <!-- 범례 -->
+    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;margin-top:12px;max-width:300px">
+      <div style="width:100%;text-align:center;font-size:9px;color:var(--text3);margin-bottom:2px">안쪽 링 = 오전 AM &nbsp;|&nbsp; 바깥 링 = 오후 PM</div>
+      ${es.map(e=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><div style="width:7px;height:7px;border-radius:2px;background:${e.color||'#6c63ff'}"></div>${e.name}</div>`).join('')}
+    </div>`;
+  // 초 업데이트용 id 저장
+  el.dataset.watchMode='1';
 }
 function updNow(){
   const now=new Date(),hmn=hm(now);
@@ -1084,7 +1235,31 @@ function tick(){
   const now=new Date();
   const cl=document.getElementById('wclk');if(cl)cl.textContent=now.toLocaleTimeString('ko-KR',{hour12:false});
   const dl=document.getElementById('wdate');if(dl)dl.textContent=now.toLocaleDateString('ko-KR',{weekday:'short',month:'short',day:'numeric'});
-  if(curView==='home'){updNow();updProg();}
+  if(curView==='home'){
+    updNow();updProg();
+    // 워치형 모드: 디지털시계 실시간 업데이트
+    if(clockViewMode==='watch'){
+      const hh=String(now.getHours()).padStart(2,'0');
+      const mm=String(now.getMinutes()).padStart(2,'0');
+      const ss=String(now.getSeconds()).padStart(2,'0');
+      const tEl=document.getElementById('watch-time');
+      const sEl=document.getElementById('watch-sec');
+      if(tEl)tEl.textContent=hh+':'+mm;
+      if(sEl)sEl.textContent=ss;
+      // 초침 바늘 갱신 (분 단위가 바뀌면 전체 재렌더)
+      if(now.getSeconds()===0){rHomeTT();}
+      else{
+        // 바늘만 회전
+        const totalMin=(now.getHours()%12)*60+now.getMinutes()+now.getSeconds()/60;
+        const angle=totalMin/720*360-90;
+        const rad=angle*Math.PI/180;
+        const cx=140,cy=140,R=102; // RRING-6=102
+        const nx=cx+R*Math.cos(rad),ny=cy+R*Math.sin(rad);
+        const nd=document.getElementById('watch-needle');
+        if(nd)nd.setAttribute('d',`M${cx},${cy} L${nx.toFixed(1)},${ny.toFixed(1)}`);
+      }
+    }
+  }
   checkAlarms();
 }
 
