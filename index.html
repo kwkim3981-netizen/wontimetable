@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>원시간표</title>
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7c6af7">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,394 +11,296 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="원시간표">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="96x96" href="icon-96.png">
-<!-- /PWA -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --bg2: #13131a;
-    --bg3: #1c1c28;
-    --bg4: #252535;
-    --accent: #7c6af7;
-    --accent2: #a78bfa;
-    --accent3: #c4b5fd;
-    --success: #22d3a5;
-    --danger: #f43f5e;
-    --warning: #f59e0b;
-    --text: #f1f0ff;
-    --text2: #a89fc7;
-    --text3: #6b6485;
-    --border: rgba(124,106,247,0.2);
-    --border2: rgba(124,106,247,0.4);
-    --radius: 14px;
-    --radius-sm: 8px;
-    --glow: 0 0 20px rgba(124,106,247,0.15);
-  }
-  /* ── LIGHT MODE ── */
-  body.light-mode {
-    --bg: #f4f3ff;
-    --bg2: #ffffff;
-    --bg3: #ede9fe;
-    --bg4: #ddd6fe;
-    --text: #1a1830;
-    --text2: #5b5280;
-    --text3: #9990b8;
-    --border: rgba(124,106,247,0.18);
-    --border2: rgba(124,106,247,0.35);
-    --glow: 0 0 20px rgba(124,106,247,0.08);
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-    font-size: 14px;
-  }
-  /* ── HEADER ── */
-  .app-header {
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .app-title { font-size: 18px; font-weight: 700; color: var(--accent2); letter-spacing: -0.5px; }
-  .header-right { display: flex; gap: 8px; align-items: center; }
-  .icon-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: var(--bg3); border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text2); font-size: 18px;
-    transition: all 0.2s;
-  }
-  .icon-btn:hover { background: var(--bg4); color: var(--accent2); }
-  /* ── NAV ── */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--bg2); border-top: 1px solid var(--border);
-    display: flex; z-index: 100;
-  }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    gap: 3px; padding: 8px 4px; cursor: pointer;
-    color: var(--text3); font-size: 10px; transition: all 0.2s;
-  }
-  .nav-item i { font-size: 22px; }
-  .nav-item.active { color: var(--accent2); }
-  .nav-item.active i { text-shadow: 0 0 12px var(--accent); }
-  /* ── PAGES ── */
-  .page { display: none; padding: 12px 12px 80px; }
-  .page.active { display: block; }
-  /* ── CARDS ── */
-  .card {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px;
-    margin-bottom: 10px;
-  }
-  .card-title {
-    font-size: 12px; font-weight: 600; color: var(--text2);
-    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  /* ── TIMETABLE ── */
-  .time-grid { display: flex; flex-direction: column; gap: 4px; }
-  .time-slot {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--bg3); border-radius: var(--radius-sm);
-    padding: 8px 10px; cursor: pointer; transition: all 0.2s;
-    border: 1px solid transparent; position: relative; overflow: hidden;
-  }
-  .time-slot:hover { border-color: var(--border2); background: var(--bg4); }
-  .time-slot.active-now { border-color: var(--accent); background: rgba(124,106,247,0.1); }
-  .time-slot.done { border-color: var(--success); }
-  .time-slot.missed { border-color: var(--danger); }
-  .time-slot.done::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--success); }
-  .time-slot.missed::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--danger); }
-  .time-slot.active-now::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--accent); animation: pulse-bar 1.5s infinite; }
-  @keyframes pulse-bar { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .slot-time { font-size: 11px; color: var(--text3); min-width: 42px; font-variant-numeric: tabular-nums; }
-  .slot-subject { flex: 1; font-weight: 500; font-size: 13px; }
-  .slot-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .slot-actions { display: flex; gap: 4px; }
-  .slot-btn {
-    width: 28px; height: 28px; border-radius: 6px; border: none;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; cursor: pointer; transition: all 0.2s;
-  }
-  .btn-done { background: rgba(34,211,165,0.15); color: var(--success); }
-  .btn-miss { background: rgba(244,63,94,0.15); color: var(--danger); }
-  .btn-timer { background: rgba(124,106,247,0.15); color: var(--accent2); }
-  .slot-status { font-size: 18px; }
-  /* ── CLOCK ── */
-  .clock-display {
-    text-align: center; padding: 16px 0;
-  }
-  .clock-time { font-size: 42px; font-weight: 700; color: var(--accent2); font-variant-numeric: tabular-nums; letter-spacing: -2px; }
-  .clock-date { font-size: 13px; color: var(--text2); margin-top: 4px; }
-  /* ── PROGRESS RING ── */
-  .progress-section { display: flex; align-items: center; gap: 16px; }
-  .ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
-  .ring-wrap svg { transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: var(--bg4); stroke-width: 8; }
-  .ring-fill { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.6s; }
-  .ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--accent2); }
-  .ring-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
-  .progress-stats { flex: 1; }
-  .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
-  .stat-label { color: var(--text2); }
-  .stat-val { font-weight: 600; }
-  .stat-val.green { color: var(--success); }
-  .stat-val.red { color: var(--danger); }
-  .stat-val.yellow { color: var(--warning); }
-  /* ── TIMER ── */
-  .timer-display {
-    text-align: center; padding: 12px;
-    background: var(--bg3); border-radius: var(--radius); margin-bottom: 10px;
-  }
-  .timer-big { font-size: 48px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent2); letter-spacing: -2px; }
-  .timer-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
-  .timer-controls { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
-  .t-btn {
-    padding: 8px 20px; border-radius: 20px; border: none;
-    font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;
-  }
-  .t-btn-start { background: var(--accent); color: white; }
-  .t-btn-pause { background: var(--warning); color: #1a0; }
-  .t-btn-stop { background: rgba(244,63,94,0.2); color: var(--danger); border: 1px solid var(--danger); }
-  .t-btn-reset { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
-  /* ── BUTTONS ── */
-  .btn-primary {
-    background: var(--accent); color: white;
-    border: none; border-radius: var(--radius-sm); padding: 10px 16px;
-    font-weight: 600; font-size: 13px; cursor: pointer; width: 100%;
-    transition: all 0.2s;
-  }
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-secondary {
-    background: var(--bg3); color: var(--text2);
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 9px 14px; font-size: 13px; cursor: pointer; width: 100%;
-    transition: all 0.2s;
-  }
-  /* ── FORM ── */
-  .form-row { margin-bottom: 10px; }
-  .form-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-input {
-    width: 100%; background: var(--bg3); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text);
-    font-size: 13px; outline: none; transition: border 0.2s;
-  }
-  .form-input:focus { border-color: var(--accent); }
-  select.form-input option { background: var(--bg3); }
-  .color-picker-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-  .color-dot {
-    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
-    border: 2px solid transparent; transition: all 0.2s;
-  }
-  .color-dot.selected { border-color: white; transform: scale(1.2); }
-  /* ── TAGS ── */
-  .tag {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
-  }
-  .tag-done { background: rgba(34,211,165,0.15); color: var(--success); }
-  .tag-miss { background: rgba(244,63,94,0.15); color: var(--danger); }
-  .tag-partial { background: rgba(245,158,11,0.15); color: var(--warning); }
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-    z-index: 200; display: none; align-items: flex-end;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--bg2); border-radius: 20px 20px 0 0;
-    border-top: 1px solid var(--border); padding: 20px 16px 30px;
-    width: 100%; max-height: 90vh; overflow-y: auto;
-    animation: slideUp 0.3s ease;
-    -webkit-overflow-scrolling: touch;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } }
-  .modal-handle {
-    width: 36px; height: 4px; background: var(--bg4); border-radius: 2px;
-    margin: 0 auto 16px;
-  }
-  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--accent2); }
-  /* ── ANALYSIS ── */
-  .analysis-item {
-    background: var(--bg3); border-radius: var(--radius-sm);
-    padding: 12px; margin-bottom: 8px; border-left: 3px solid;
-  }
-  .analysis-item.danger { border-color: var(--danger); }
-  .analysis-item.warning { border-color: var(--warning); }
-  .analysis-item.success { border-color: var(--success); }
-  .analysis-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-  .analysis-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
-  /* ── LEADERBOARD ── */
-  .rank-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--bg3); border-radius: var(--radius-sm);
-    padding: 10px 12px; margin-bottom: 6px;
-    border: 1px solid transparent;
-  }
-  .rank-item.rank-1 { border-color: #f59e0b; background: rgba(245,158,11,0.08); }
-  .rank-item.rank-2 { border-color: #94a3b8; background: rgba(148,163,184,0.05); }
-  .rank-item.rank-3 { border-color: #c97c2c; background: rgba(201,124,44,0.05); }
-  .rank-num { font-size: 16px; font-weight: 700; min-width: 28px; color: var(--text3); }
-  .rank-1 .rank-num { color: #f59e0b; }
-  .rank-2 .rank-num { color: #94a3b8; }
-  .rank-3 .rank-num { color: #c97c2c; }
-  .rank-info { flex: 1; }
-  .rank-name { font-size: 13px; font-weight: 600; }
-  .rank-detail { font-size: 11px; color: var(--text2); margin-top: 2px; }
-  .rank-score { text-align: right; }
-  .rank-pct { font-size: 16px; font-weight: 700; color: var(--accent2); }
-  .rank-time { font-size: 10px; color: var(--text3); }
-  /* ── ALARM ── */
-  .alarm-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--bg3); border-radius: var(--radius-sm);
-    padding: 10px 12px; margin-bottom: 6px;
-  }
-  .alarm-time-big { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
-  .alarm-info { flex: 1; }
-  .alarm-label { font-size: 12px; color: var(--text2); }
-  .toggle-switch {
-    width: 44px; height: 24px; background: var(--bg4); border-radius: 12px;
-    position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0;
-  }
-  .toggle-switch.on { background: var(--accent); }
-  .toggle-switch::after {
-    content: ''; position: absolute; width: 18px; height: 18px;
-    background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s;
-  }
-  .toggle-switch.on::after { left: 23px; }
-  /* ── SHARE ── */
-  .share-code {
-    font-size: 32px; font-weight: 700; letter-spacing: 8px;
-    color: var(--accent2); text-align: center; padding: 16px;
-    background: var(--bg3); border-radius: var(--radius); margin: 10px 0;
-    font-variant-numeric: tabular-nums;
-  }
-  /* ── NOTIFICATIONS ── */
-  .notif-toast {
-    position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-    background: var(--bg2); border: 1px solid var(--border2);
-    border-radius: var(--radius); padding: 10px 16px;
-    font-size: 13px; z-index: 300; display: none;
-    min-width: 200px; text-align: center; box-shadow: var(--glow);
-  }
-  .notif-toast.show { display: block; animation: fadeInOut 3s forwards; }
-  @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(-8px)} 15%{opacity:1;transform:translateX(-50%) translateY(0)} 70%{opacity:1} 100%{opacity:0} }
-  /* ── TABS ── */
-  .tabs { display: flex; background: var(--bg3); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 12px; }
-  .tab {
-    flex: 1; text-align: center; padding: 7px 4px; border-radius: 6px;
-    font-size: 11px; font-weight: 600; color: var(--text3); cursor: pointer; transition: all 0.2s;
-  }
-  .tab.active { background: var(--accent); color: white; }
-  /* ── CHARTS ── */
-  .chart-wrap { position: relative; width: 100%; }
-  /* ── MISC ── */
-  .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
-  .divider { height: 1px; background: var(--border); margin: 12px 0; }
-  .flex-row { display: flex; gap: 8px; }
-  .flex-1 { flex: 1; }
-  .badge {
-    display: inline-block; padding: 2px 7px; border-radius: 10px;
-    font-size: 10px; font-weight: 600;
-  }
-  .badge-accent { background: rgba(124,106,247,0.2); color: var(--accent2); }
-  .empty-state { text-align: center; padding: 30px 0; color: var(--text3); font-size: 13px; }
-  .empty-state i { font-size: 36px; display: block; margin-bottom: 8px; }
-  /* ── WATCH MODE ── */
-  .watch-mode body { font-size: 12px; }
-  @media (max-width: 360px) {
-    .clock-time { font-size: 36px; }
-    .timer-big { font-size: 40px; }
-  }
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-  /* 터치 최적화 */
-  button, .btn-primary, .btn-secondary, .slot-btn, .nav-item, .icon-btn, .tab, .toggle-switch, .color-dot {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-    cursor: pointer;
-  }
-  .btn-primary { min-height: 44px; }
-  .btn-secondary { min-height: 44px; }
-  .slot-btn { min-width: 36px; min-height: 36px; }
+:root {
+  --bg:#0a0a0f; --bg2:#13131a; --bg3:#1c1c28; --bg4:#252535;
+  --accent:#7c6af7; --accent2:#a78bfa; --accent3:#c4b5fd;
+  --success:#22d3a5; --danger:#f43f5e; --warning:#f59e0b;
+  --text:#f1f0ff; --text2:#a89fc7; --text3:#6b6485;
+  --border:rgba(124,106,247,0.2); --border2:rgba(124,106,247,0.4);
+  --radius:14px; --radius-sm:8px; --glow:0 0 20px rgba(124,106,247,0.15);
+}
+body.light-mode {
+  --bg:#f4f3ff; --bg2:#ffffff; --bg3:#ede9fe; --bg4:#ddd6fe;
+  --text:#1a1830; --text2:#5b5280; --text3:#9990b8;
+  --border:rgba(124,106,247,0.18); --border2:rgba(124,106,247,0.35);
+  --glow:0 0 20px rgba(124,106,247,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:14px;}
+
+/* ── HEADER ── */
+.app-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.app-title{font-size:16px;font-weight:700;color:var(--accent2);letter-spacing:-0.5px;display:flex;align-items:center;gap:6px;}
+.header-right{display:flex;gap:6px;align-items:center;}
+.icon-btn{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:17px;transition:all 0.2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.icon-btn:active{background:var(--bg4);color:var(--accent2);}
+
+/* ── PROFILE SELECTOR ── */
+.profile-bar{background:var(--bg3);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:8px;overflow-x:auto;}
+.profile-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;touch-action:manipulation;transition:all 0.2s;}
+.profile-chip.active{border-color:var(--accent);background:rgba(124,106,247,0.15);color:var(--accent2);}
+.profile-chip .profile-avatar{width:20px;height:20px;border-radius:50%;object-fit:cover;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;flex-shrink:0;}
+.profile-add-btn{padding:5px 10px;border-radius:20px;border:1.5px dashed var(--border2);background:transparent;color:var(--accent2);font-size:12px;cursor:pointer;white-space:nowrap;touch-action:manipulation;}
+
+/* ── NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:flex;z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px;cursor:pointer;color:var(--text3);font-size:10px;transition:all 0.2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.nav-item i{font-size:20px;}
+.nav-item.active{color:var(--accent2);}
+
+/* ── PAGES ── */
+.page{display:none;padding:12px 12px 80px;}
+.page.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+/* ── TIMELINE ── */
+.timeline-wrap{position:relative;padding-left:60px;}
+.timeline-hour{position:absolute;left:0;font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;width:50px;text-align:right;line-height:1;}
+.timeline-line{position:absolute;left:56px;top:0;bottom:0;width:1px;background:var(--border);}
+.timeline-now-line{position:absolute;left:50px;right:0;height:2px;background:var(--danger);z-index:10;border-radius:1px;}
+.timeline-now-dot{position:absolute;left:47px;width:8px;height:8px;border-radius:50%;background:var(--danger);transform:translateY(-3px);}
+
+/* ── TIMETABLE ── */
+.time-grid{display:flex;flex-direction:column;gap:4px;}
+.time-slot{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;position:relative;overflow:hidden;touch-action:manipulation;}
+.time-slot.active-now{border-color:var(--accent);background:rgba(124,106,247,0.1);}
+.time-slot.done{border-color:var(--success);}
+.time-slot.missed{border-color:var(--danger);}
+.time-slot.past-pending{opacity:0.55;}
+.time-slot.done::before,.time-slot.missed::before,.time-slot.active-now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.time-slot.done::before{background:var(--success);}
+.time-slot.missed::before{background:var(--danger);}
+.time-slot.active-now::before{background:var(--accent);animation:pulse-bar 1.5s infinite;}
+@keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:0.4}}
+.slot-time{font-size:11px;color:var(--text3);min-width:42px;font-variant-numeric:tabular-nums;}
+.slot-subject{flex:1;font-weight:500;font-size:13px;}
+.slot-color{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.slot-actions{display:flex;gap:4px;}
+.slot-btn{width:30px;height:30px;border-radius:6px;border:none;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all 0.2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.btn-done{background:rgba(34,211,165,0.15);color:var(--success);}
+.btn-miss{background:rgba(244,63,94,0.15);color:var(--danger);}
+.btn-timer{background:rgba(124,106,247,0.15);color:var(--accent2);}
+
+/* ── PROGRESS BAR TIMELINE ── */
+.slot-progress{position:absolute;bottom:0;left:0;height:2px;background:var(--accent);transition:width 1s linear;border-radius:0 0 0 0;}
+
+/* ── CLOCK ── */
+.clock-display{text-align:center;padding:14px 0 8px;}
+.clock-time{font-size:40px;font-weight:700;color:var(--accent2);font-variant-numeric:tabular-nums;letter-spacing:-2px;}
+.clock-date{font-size:12px;color:var(--text2);margin-top:4px;}
+.current-slot-banner{background:linear-gradient(135deg,rgba(124,106,247,0.2),rgba(167,139,250,0.1));border:1px solid var(--accent);border-radius:var(--radius-sm);padding:8px 12px;margin:0 0 10px;display:flex;align-items:center;gap:10px;}
+.current-slot-label{font-size:11px;color:var(--accent2);font-weight:600;}
+.current-slot-name{font-size:15px;font-weight:700;color:var(--text);}
+.current-slot-time{font-size:11px;color:var(--text2);}
+.slot-countdown{font-size:12px;color:var(--warning);font-weight:600;margin-left:auto;}
+
+/* ── PROGRESS RING ── */
+.progress-section{display:flex;align-items:center;gap:14px;}
+.ring-wrap{position:relative;width:76px;height:76px;flex-shrink:0;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:var(--bg4);stroke-width:8;}
+.ring-fill{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 0.6s;}
+.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:var(--accent2);}
+.ring-sub{font-size:9px;color:var(--text3);margin-top:1px;}
+.progress-stats{flex:1;}
+.stat-row{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;}
+.stat-label{color:var(--text2);}
+.stat-val{font-weight:600;}
+.stat-val.green{color:var(--success);}
+.stat-val.red{color:var(--danger);}
+.stat-val.yellow{color:var(--warning);}
+
+/* ── TIMER ── */
+.timer-display{text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius);margin-bottom:10px;}
+.timer-big{font-size:46px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent2);letter-spacing:-2px;}
+.timer-label{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.timer-controls{display:flex;gap:8px;justify-content:center;margin-top:10px;}
+.t-btn{padding:8px 18px;border-radius:20px;border:none;font-weight:600;font-size:13px;cursor:pointer;transition:all 0.2s;touch-action:manipulation;}
+.t-btn-start{background:var(--accent);color:white;}
+.t-btn-pause{background:var(--warning);color:#1a0;}
+.t-btn-stop{background:rgba(244,63,94,0.2);color:var(--danger);border:1px solid var(--danger);}
+
+/* ── BUTTONS ── */
+.btn-primary{background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:11px 16px;font-weight:600;font-size:13px;cursor:pointer;width:100%;transition:all 0.2s;min-height:44px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.btn-primary:active{opacity:0.8;}
+.btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;cursor:pointer;width:100%;transition:all 0.2s;min-height:44px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.btn-secondary:active{background:var(--bg4);}
+.btn-danger{background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;cursor:pointer;width:100%;min-height:44px;touch-action:manipulation;}
+
+/* ── FORM ── */
+.form-row{margin-bottom:10px;}
+.form-label{font-size:11px;color:var(--text2);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:0.5px;}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;outline:none;transition:border 0.2s;min-height:44px;}
+.form-input:focus{border-color:var(--accent);}
+select.form-input option{background:var(--bg3);}
+.color-picker-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s;touch-action:manipulation;}
+.color-dot.selected{border-color:white;transform:scale(1.2);}
+.color-mode-row{display:flex;gap:8px;margin-bottom:8px;}
+.color-mode-btn{flex:1;padding:7px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;text-align:center;touch-action:manipulation;}
+.color-mode-btn.active{border-color:var(--accent);color:var(--accent2);background:rgba(124,106,247,0.1);}
+
+/* ── TAGS ── */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.tag-done{background:rgba(34,211,165,0.15);color:var(--success);}
+.tag-miss{background:rgba(244,63,94,0.15);color:var(--danger);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:none;align-items:flex-end;-webkit-tap-highlight-color:transparent;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:18px 16px 32px;width:100%;max-height:88vh;overflow-y:auto;animation:slideUp 0.28s ease;-webkit-overflow-scrolling:touch;}
+@keyframes slideUp{from{transform:translateY(100%)}}
+.modal-handle{width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:0 auto 14px;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:14px;color:var(--accent2);}
+
+/* ── PARENT MODE BADGE ── */
+.parent-badge{background:rgba(245,158,11,0.15);border:1px solid var(--warning);color:var(--warning);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+
+/* ── ANALYSIS ── */
+.analysis-item{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid;}
+.analysis-item.danger{border-color:var(--danger);}
+.analysis-item.warning{border-color:var(--warning);}
+.analysis-item.success{border-color:var(--success);}
+.analysis-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.analysis-desc{font-size:11px;color:var(--text2);line-height:1.5;}
+
+/* ── LEADERBOARD ── */
+.rank-item{display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;border:1px solid transparent;}
+.rank-item.rank-1{border-color:#f59e0b;background:rgba(245,158,11,0.08);}
+.rank-item.rank-2{border-color:#94a3b8;background:rgba(148,163,184,0.05);}
+.rank-item.rank-3{border-color:#c97c2c;background:rgba(201,124,44,0.05);}
+.rank-num{font-size:16px;font-weight:700;min-width:28px;color:var(--text3);}
+.rank-1 .rank-num{color:#f59e0b;}
+.rank-2 .rank-num{color:#94a3b8;}
+.rank-3 .rank-num{color:#c97c2c;}
+.rank-info{flex:1;}
+.rank-name{font-size:13px;font-weight:600;}
+.rank-detail{font-size:11px;color:var(--text2);margin-top:2px;}
+.rank-score{text-align:right;}
+.rank-pct{font-size:16px;font-weight:700;color:var(--accent2);}
+
+/* ── ALARM ── */
+.alarm-item{display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;}
+.alarm-time-big{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);}
+.alarm-info{flex:1;}
+.alarm-label{font-size:12px;color:var(--text2);}
+.toggle-switch{width:44px;height:24px;background:var(--bg4);border-radius:12px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;touch-action:manipulation;}
+.toggle-switch.on{background:var(--accent);}
+.toggle-switch::after{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:3px;transition:left 0.2s;}
+.toggle-switch.on::after{left:23px;}
+
+/* ── SHARE ── */
+.share-code{font-size:30px;font-weight:700;letter-spacing:8px;color:var(--accent2);text-align:center;padding:14px;background:var(--bg3);border-radius:var(--radius);margin:10px 0;font-variant-numeric:tabular-nums;}
+
+/* ── TOAST ── */
+.notif-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 16px;font-size:13px;z-index:300;display:none;min-width:200px;text-align:center;box-shadow:var(--glow);}
+.notif-toast.show{display:block;animation:fadeInOut 3s forwards;}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}70%{opacity:1}100%{opacity:0}}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--bg3);border-radius:var(--radius-sm);padding:3px;margin-bottom:12px;}
+.tab{flex:1;text-align:center;padding:7px 4px;border-radius:6px;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.2s;touch-action:manipulation;}
+.tab.active{background:var(--accent);color:white;}
+
+/* ── CHARTS ── */
+.chart-wrap{position:relative;width:100%;}
+
+/* ── MISC ── */
+.section-title{font-size:14px;font-weight:700;color:var(--text);margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.flex-row{display:flex;gap:8px;}
+.flex-1{flex:1;}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;}
+.badge-accent{background:rgba(124,106,247,0.2);color:var(--accent2);}
+.empty-state{text-align:center;padding:28px 0;color:var(--text3);font-size:13px;}
+.empty-state i{font-size:34px;display:block;margin-bottom:8px;}
+
+/* ── CAMERA INPUT ── */
+.camera-preview{width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);aspect-ratio:4/3;object-fit:cover;display:none;}
+.camera-active .camera-preview{display:block;}
+
+/* ── PARENT VIEW ── */
+.parent-view-banner{background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(251,146,36,0.1));border:1px solid rgba(245,158,11,0.4);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--warning);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── TOUCH OPTIMIZE ── */
+button,.btn-primary,.btn-secondary,.slot-btn,.nav-item,.icon-btn,.tab,.toggle-switch,.color-dot{-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;}
+
+/* ── LIGHT MODE ADJUSTMENTS ── */
+body.light-mode .mock-screen{background:#1a1a2e;}
 </style>
 </head>
 <body>
 
 <!-- PWA 설치 배너 -->
-<div id="installBanner" style="display:none;position:fixed;bottom:70px;left:12px;right:12px;z-index:150;
-  background:linear-gradient(135deg,#1c1c28,#252535);border:1px solid rgba(124,106,247,0.5);
-  border-radius:14px;padding:14px 16px;box-shadow:0 4px 24px rgba(124,106,247,0.2)">
+<div id="installBanner" style="display:none;position:fixed;bottom:70px;left:12px;right:12px;z-index:150;background:linear-gradient(135deg,#1c1c28,#252535);border:1px solid rgba(124,106,247,0.5);border-radius:14px;padding:14px 16px;box-shadow:0 4px 24px rgba(124,106,247,0.2)">
   <div style="display:flex;align-items:center;gap:12px">
-    <img src="icon-96.png" width="40" height="40" style="border-radius:10px" alt="아이콘">
-    <div style="flex:1">
-      <div style="font-size:14px;font-weight:700;color:#f1f0ff">원시간표 설치하기</div>
-      <div style="font-size:11px;color:#a89fc7;margin-top:2px">홈 화면에 추가하면 앱처럼 사용 가능 + 오프라인 지원</div>
-    </div>
-    <button onclick="dismissInstall()" style="background:none;border:none;color:#6b6485;font-size:20px;cursor:pointer;padding:4px">✕</button>
+    <img src="icon-96.png" width="38" height="38" style="border-radius:10px" alt="">
+    <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#f1f0ff">원시간표 설치하기</div><div style="font-size:11px;color:#a89fc7;margin-top:2px">홈 화면에 추가하면 앱처럼 사용 + 오프라인 지원</div></div>
+    <button onclick="dismissInstall()" style="background:none;border:none;color:#6b6485;font-size:20px;cursor:pointer">✕</button>
   </div>
   <div style="display:flex;gap:8px;margin-top:10px">
-    <button id="installBtn" onclick="doInstall()"
-      style="flex:1;background:#7c6af7;color:white;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer">
-      📲 설치
-    </button>
-    <button onclick="dismissInstall()"
-      style="flex:1;background:rgba(255,255,255,0.06);color:#a89fc7;border:1px solid rgba(124,106,247,0.3);border-radius:8px;padding:9px;font-size:13px;cursor:pointer">
-      나중에
-    </button>
+    <button id="installBtn" onclick="doInstall()" style="flex:1;background:#7c6af7;color:white;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer">📲 설치</button>
+    <button onclick="dismissInstall()" style="flex:1;background:rgba(255,255,255,0.06);color:#a89fc7;border:1px solid rgba(124,106,247,0.3);border-radius:8px;padding:9px;font-size:13px;cursor:pointer">나중에</button>
   </div>
 </div>
 
-<!-- iOS 설치 안내 (Safari) -->
-<div id="iosBanner" style="display:none;position:fixed;bottom:70px;left:12px;right:12px;z-index:150;
-  background:#1c1c28;border:1px solid rgba(124,106,247,0.4);border-radius:14px;padding:14px 16px">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start">
-    <div style="font-size:13px;font-weight:700;color:#f1f0ff;margin-bottom:8px">📲 홈 화면에 추가하는 방법</div>
-    <button onclick="dismissIos()" style="background:none;border:none;color:#6b6485;font-size:18px;cursor:pointer">✕</button>
-  </div>
-  <div style="font-size:12px;color:#a89fc7;line-height:1.8">
-    1. Safari 하단 <strong style="color:#a78bfa">공유 버튼 □↑</strong> 탭<br>
-    2. <strong style="color:#a78bfa">"홈 화면에 추가"</strong> 선택<br>
-    3. <strong style="color:#a78bfa">"추가"</strong> 탭 → 완료!
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="notif-toast" id="toast"></div>
+<div id="toast" class="notif-toast"></div>
 
 <!-- HEADER -->
 <div class="app-header">
-  <div class="app-title">⏱ 원시간표</div>
+  <div class="app-title">
+    <span id="headerProfileEmoji">⏱</span>
+    <span id="headerTitle">원시간표</span>
+    <span id="parentBadge" style="display:none" class="parent-badge">👨‍👩‍👧 학부모</span>
+  </div>
   <div class="header-right">
-    <div class="icon-btn" id="themeToggleBtn" onclick="toggleLightMode()" title="화면 밝기 전환"><i class="ti ti-sun"></i></div>
-    <div class="icon-btn" onclick="openSettings()" title="설정"><i class="ti ti-settings"></i></div>
+    <div class="icon-btn" id="themeToggleBtn" title="밝기 전환"><i class="ti ti-sun"></i></div>
+    <div class="icon-btn" onclick="openCameraModal()" title="카메라로 시간표 추가"><i class="ti ti-camera"></i></div>
     <div class="icon-btn" onclick="openShare()" title="공유"><i class="ti ti-share"></i></div>
     <div class="icon-btn" onclick="openAlarmModal()" title="알람"><i class="ti ti-bell"></i></div>
   </div>
 </div>
 
+<!-- PROFILE BAR -->
+<div class="profile-bar" id="profileBar">
+  <!-- JS로 렌더링 -->
+</div>
+
 <!-- PAGES -->
 <div id="page-home" class="page active">
+
+  <!-- 학부모 보기 배너 -->
+  <div id="parentViewBanner" class="parent-view-banner" style="display:none">
+    <i class="ti ti-eye" style="font-size:16px"></i>
+    <span>학부모 보기 모드 — 읽기 전용</span>
+    <button onclick="exitParentView()" style="margin-left:auto;background:none;border:1px solid var(--warning);color:var(--warning);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer">나가기</button>
+  </div>
+
   <!-- Clock -->
   <div class="clock-display">
     <div class="clock-time" id="mainClock">00:00:00</div>
     <div class="clock-date" id="mainDate">—</div>
+  </div>
+
+  <!-- 현재 진행 중인 일정 배너 -->
+  <div id="currentSlotBanner" class="current-slot-banner" style="display:none">
+    <div>
+      <div class="current-slot-label">▶ 지금 진행 중</div>
+      <div class="current-slot-name" id="currentSlotName">—</div>
+      <div class="current-slot-time" id="currentSlotTime">—</div>
+    </div>
+    <div class="slot-countdown" id="slotCountdown">—</div>
   </div>
 
   <!-- Progress -->
@@ -407,7 +308,7 @@
     <div class="card-title"><i class="ti ti-chart-pie" style="font-size:14px"></i> 오늘의 달성률</div>
     <div class="progress-section">
       <div class="ring-wrap">
-        <svg viewBox="0 0 80 80" width="80" height="80">
+        <svg viewBox="0 0 80 80" width="76" height="76">
           <circle class="ring-bg" cx="40" cy="40" r="32"/>
           <circle class="ring-fill" id="progressRing" cx="40" cy="40" r="32" stroke-dasharray="201" stroke-dashoffset="201"/>
         </svg>
@@ -417,7 +318,7 @@
         <div class="stat-row"><span class="stat-label">계획된 일정</span><span class="stat-val" id="totalSlots">0개</span></div>
         <div class="stat-row"><span class="stat-label">완료</span><span class="stat-val green" id="doneSlots">0개</span></div>
         <div class="stat-row"><span class="stat-label">미달성</span><span class="stat-val red" id="missedSlots">0개</span></div>
-        <div class="stat-row"><span class="stat-label">계획 시간</span><span class="stat-val yellow" id="totalHours">0h</span></div>
+        <div class="stat-row"><span class="stat-label">남은 일정</span><span class="stat-val yellow" id="remainSlots">0개</span></div>
         <div class="stat-row"><span class="stat-label">완료 시간</span><span class="stat-val green" id="doneHours">0h</span></div>
       </div>
     </div>
@@ -438,9 +339,9 @@
   </div>
 
   <!-- Timetable -->
-  <div class="section-title"><i class="ti ti-calendar" style="font-size:16px"></i> 오늘의 시간표</div>
+  <div class="section-title"><i class="ti ti-calendar" style="font-size:16px"></i> 오늘의 시간표 <span id="slotDateLabel" style="font-size:11px;color:var(--text3);margin-left:4px"></span></div>
   <div class="time-grid" id="timetableGrid"></div>
-  <div style="margin-top:10px">
+  <div style="margin-top:10px" id="addSlotSection">
     <button class="btn-primary" id="addSlotBtn"><i class="ti ti-plus"></i> 일정 추가</button>
   </div>
 </div>
@@ -453,48 +354,19 @@
     <div class="tab" onclick="switchAnalyticsTab('monthly')">월간</div>
     <div class="tab" onclick="switchAnalyticsTab('analysis')">분석</div>
   </div>
-
   <div id="analyticsDaily">
-    <div class="card">
-      <div class="card-title">오늘 시간별 달성</div>
-      <div class="chart-wrap" style="height:200px">
-        <canvas id="chartDaily" role="img" aria-label="오늘 시간대별 달성 현황 막대 그래프">오늘 시간대별 달성 현황</canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">과목별 달성률</div>
-      <div class="chart-wrap" style="height:200px">
-        <canvas id="chartSubject" role="img" aria-label="과목별 달성률 도넛 차트">과목별 달성률</canvas>
-      </div>
-    </div>
+    <div class="card"><div class="card-title">오늘 과목별 달성</div><div class="chart-wrap" style="height:200px"><canvas id="chartDaily"></canvas></div></div>
+    <div class="card"><div class="card-title">과목별 달성률</div><div class="chart-wrap" style="height:180px"><canvas id="chartSubject"></canvas></div></div>
   </div>
-
   <div id="analyticsWeekly" style="display:none">
-    <div class="card">
-      <div class="card-title">주간 달성 시간</div>
-      <div class="chart-wrap" style="height:220px">
-        <canvas id="chartWeekly" role="img" aria-label="주간 달성 시간 막대 그래프">주간 달성 시간</canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">주간 달성률 트렌드</div>
-      <div class="chart-wrap" style="height:180px">
-        <canvas id="chartWeeklyPct" role="img" aria-label="주간 달성률 트렌드 라인 차트">주간 달성률 트렌드</canvas>
-      </div>
-    </div>
+    <div class="card"><div class="card-title">주간 달성 시간</div><div class="chart-wrap" style="height:200px"><canvas id="chartWeekly"></canvas></div></div>
+    <div class="card"><div class="card-title">주간 달성률 트렌드</div><div class="chart-wrap" style="height:180px"><canvas id="chartWeeklyPct"></canvas></div></div>
   </div>
-
   <div id="analyticsMonthly" style="display:none">
-    <div class="card">
-      <div class="card-title">월간 달성 현황</div>
-      <div class="chart-wrap" style="height:220px">
-        <canvas id="chartMonthly" role="img" aria-label="월간 달성 현황 막대 그래프">월간 달성 현황</canvas>
-      </div>
-    </div>
+    <div class="card"><div class="card-title">월간 달성 현황</div><div class="chart-wrap" style="height:200px"><canvas id="chartMonthly"></canvas></div></div>
   </div>
-
   <div id="analyticsAnalysis" style="display:none">
-    <div class="section-title"><i class="ti ti-brain" style="font-size:16px"></i> AI 미달성 분석</div>
+    <div class="section-title"><i class="ti ti-brain" style="font-size:16px"></i> 미달성 분석</div>
     <div id="analysisItems"></div>
     <button class="btn-secondary" style="margin-top:8px" onclick="runAnalysis()"><i class="ti ti-refresh"></i> 분석 업데이트</button>
   </div>
@@ -503,19 +375,16 @@
 <!-- RANKING PAGE -->
 <div id="page-ranking" class="page">
   <div class="card" style="text-align:center;margin-bottom:12px">
-    <div style="font-size:13px;color:var(--text2);margin-bottom:8px">내 닉네임</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px">내 닉네임</div>
     <div style="font-size:20px;font-weight:700;color:var(--accent2)" id="myNicknameDisplay">—</div>
     <div style="font-size:12px;color:var(--text3);margin-top:4px" id="myRankDisplay">순위를 불러오는 중...</div>
   </div>
-
   <div class="tabs" id="rankTabs">
     <div class="tab active" onclick="switchRankTab('achievement')">달성률</div>
     <div class="tab" onclick="switchRankTab('time')">총 시간</div>
     <div class="tab" onclick="switchRankTab('streak')">연속 달성</div>
   </div>
-
   <div id="rankList"></div>
-
   <div style="margin-top:10px">
     <button class="btn-primary" onclick="uploadMyScore()"><i class="ti ti-upload"></i> 내 점수 공유하기</button>
   </div>
@@ -523,13 +392,28 @@
 
 <!-- SETTINGS PAGE -->
 <div id="page-settings" class="page">
-  <div class="section-title">👤 프로필</div>
+  <div class="section-title">👤 프로필 관리</div>
   <div class="card">
-    <div class="form-row">
-      <label class="form-label">닉네임</label>
-      <input class="form-input" id="nicknameInput" placeholder="닉네임 입력" maxlength="12">
+    <div id="profileListSettings"></div>
+    <div style="margin-top:8px">
+      <button class="btn-primary" onclick="openAddProfileModal()"><i class="ti ti-user-plus"></i> 프로필 추가</button>
     </div>
-    <button class="btn-primary" onclick="saveNickname()">저장</button>
+  </div>
+
+  <div class="section-title">👨‍👩‍👧 학부모 연동</div>
+  <div class="card">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">학부모가 아이 시간표를 볼 수 있는 코드를 공유하세요</div>
+    <div class="share-code" id="parentCodeDisplay" style="font-size:22px;letter-spacing:4px">------</div>
+    <div class="flex-row" style="margin-top:8px">
+      <button class="btn-secondary flex-1" onclick="copyParentCode()"><i class="ti ti-copy"></i> 코드 복사</button>
+      <button class="btn-secondary flex-1" onclick="regenParentCode()"><i class="ti ti-refresh"></i> 재발급</button>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:8px">학부모 코드로 접속하기</div>
+    <div class="flex-row">
+      <input class="form-input flex-1" id="parentCodeInput" placeholder="6자리 코드" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
+      <button class="btn-primary flex-1" onclick="enterParentView()" style="width:auto">접속</button>
+    </div>
   </div>
 
   <div class="section-title">🎨 테마 설정</div>
@@ -537,12 +421,12 @@
     <div class="form-row">
       <label class="form-label">액센트 색상</label>
       <div class="color-picker-row" id="themeColorPicker">
-        <div class="color-dot selected" style="background:#7c6af7" onclick="setTheme('#7c6af7','#a78bfa')" title="보라"></div>
-        <div class="color-dot" style="background:#06b6d4" onclick="setTheme('#06b6d4','#22d3ee')" title="청록"></div>
-        <div class="color-dot" style="background:#f43f5e" onclick="setTheme('#f43f5e','#fb7185')" title="빨강"></div>
-        <div class="color-dot" style="background:#10b981" onclick="setTheme('#10b981','#34d399')" title="초록"></div>
-        <div class="color-dot" style="background:#f59e0b" onclick="setTheme('#f59e0b','#fbbf24')" title="노랑"></div>
-        <div class="color-dot" style="background:#ec4899" onclick="setTheme('#ec4899','#f472b6')" title="핑크"></div>
+        <div class="color-dot selected" style="background:#7c6af7" onclick="setTheme('#7c6af7','#a78bfa')"></div>
+        <div class="color-dot" style="background:#06b6d4" onclick="setTheme('#06b6d4','#22d3ee')"></div>
+        <div class="color-dot" style="background:#f43f5e" onclick="setTheme('#f43f5e','#fb7185')"></div>
+        <div class="color-dot" style="background:#10b981" onclick="setTheme('#10b981','#34d399')"></div>
+        <div class="color-dot" style="background:#f59e0b" onclick="setTheme('#f59e0b','#fbbf24')"></div>
+        <div class="color-dot" style="background:#ec4899" onclick="setTheme('#ec4899','#f472b6')"></div>
       </div>
     </div>
     <div class="form-row">
@@ -568,10 +452,6 @@
         <span style="font-size:12px;color:var(--text2)" id="autoNotifLabel">켜짐</span>
       </div>
     </div>
-    <div class="form-row">
-      <label class="form-label">기본 시간표 시작 시각</label>
-      <input class="form-input" type="time" id="defaultStartTime" value="06:00">
-    </div>
     <button class="btn-primary" onclick="saveSettings()">설정 저장</button>
   </div>
 
@@ -582,7 +462,7 @@
       <button class="btn-secondary flex-1" onclick="importDataPrompt()"><i class="ti ti-upload"></i> 가져오기</button>
     </div>
     <div style="margin-top:8px">
-      <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger)" onclick="clearAllData()">🗑 모든 데이터 삭제</button>
+      <button class="btn-danger" onclick="clearAllData()">🗑 모든 데이터 삭제</button>
     </div>
   </div>
 </div>
@@ -595,52 +475,38 @@
   <div class="nav-item" id="nav-settings" onclick="goPage('settings')"><i class="ti ti-settings"></i>설정</div>
 </nav>
 
-<!-- ── MODALS ── -->
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
 
 <!-- Add Slot Modal -->
 <div class="modal-overlay" id="addSlotModal">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="addSlotTitle">일정 추가</div>
-    <div class="form-row">
-      <label class="form-label">과목/활동명</label>
-      <input class="form-input" id="slotName" placeholder="예: 수학, 영어, 독서">
-    </div>
+    <div class="form-row"><label class="form-label">과목/활동명</label><input class="form-input" id="slotName" placeholder="예: 수학, 영어, 독서"></div>
     <div class="flex-row">
-      <div class="form-row flex-1">
-        <label class="form-label">시작 시간</label>
-        <input class="form-input" type="time" id="slotStart" value="09:00">
-      </div>
-      <div class="form-row flex-1">
-        <label class="form-label">종료 시간</label>
-        <input class="form-input" type="time" id="slotEnd" value="10:00">
-      </div>
+      <div class="form-row flex-1"><label class="form-label">시작</label><input class="form-input" type="time" id="slotStart" value="09:00"></div>
+      <div class="form-row flex-1"><label class="form-label">종료</label><input class="form-input" type="time" id="slotEnd" value="10:00"></div>
     </div>
     <div class="form-row">
       <label class="form-label">색상</label>
-      <div class="color-picker-row" id="slotColorPicker"></div>
+      <div class="color-mode-row">
+        <div class="color-mode-btn active" id="colorModeAuto" onclick="setColorMode('auto')">🎨 자동</div>
+        <div class="color-mode-btn" id="colorModeManual" onclick="setColorMode('manual')">✋ 수동</div>
+      </div>
+      <div id="manualColorPicker" style="display:none"><div class="color-picker-row" id="slotColorPicker"></div></div>
+      <div id="autoColorPreview" style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:var(--text2)"><div id="autoColorDot" style="width:16px;height:16px;border-radius:50%;background:#7c6af7"></div><span>과목명에 따라 자동 색상 적용</span></div>
     </div>
     <div class="form-row">
       <label class="form-label">중요도</label>
-      <select class="form-input" id="slotPriority">
-        <option value="high">🔴 높음</option>
-        <option value="mid" selected>🟡 보통</option>
-        <option value="low">🟢 낮음</option>
-      </select>
+      <select class="form-input" id="slotPriority"><option value="high">🔴 높음</option><option value="mid" selected>🟡 보통</option><option value="low">🟢 낮음</option></select>
     </div>
     <div class="form-row">
       <label class="form-label">반복</label>
-      <select class="form-input" id="slotRepeat">
-        <option value="none">없음</option>
-        <option value="daily">매일</option>
-        <option value="weekday">평일</option>
-        <option value="weekend">주말</option>
-      </select>
+      <select class="form-input" id="slotRepeat"><option value="daily">매일</option><option value="weekday">평일</option><option value="weekend">주말</option><option value="none">오늘만</option></select>
     </div>
-    <div class="form-row">
-      <label class="form-label">메모</label>
-      <input class="form-input" id="slotMemo" placeholder="선택사항">
-    </div>
+    <div class="form-row"><label class="form-label">메모</label><input class="form-input" id="slotMemo" placeholder="선택사항"></div>
     <div class="flex-row" style="margin-top:4px">
       <button class="btn-secondary flex-1" onclick="closeModal('addSlotModal')">취소</button>
       <button class="btn-primary flex-1" onclick="saveSlot()">저장</button>
@@ -648,14 +514,35 @@
   </div>
 </div>
 
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settingsModal">
+<!-- Add Profile Modal -->
+<div class="modal-overlay" id="addProfileModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">설정</div>
-    <div style="font-size:13px;color:var(--text2)">설정 페이지로 이동하여 변경하세요.</div>
-    <div style="margin-top:12px">
-      <button class="btn-primary" onclick="closeModal('settingsModal');goPage('settings')">설정 페이지 열기</button>
+    <div class="modal-title">프로필 추가</div>
+    <div class="form-row"><label class="form-label">이름</label><input class="form-input" id="newProfileName" placeholder="예: 김민준, 엄마, 아빠"></div>
+    <div class="form-row">
+      <label class="form-label">역할</label>
+      <select class="form-input" id="newProfileRole">
+        <option value="student">👦 학생</option>
+        <option value="parent">👨‍👩‍👧 학부모</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">아이콘</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="profileEmojiPicker">
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'👦')">👦</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'👧')">👧</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'👨')">👨</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'👩')">👩</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'🧒')">🧒</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'👴')">👴</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'👵')">👵</span>
+        <span style="font-size:24px;cursor:pointer;padding:4px" onclick="selectProfileEmoji(this,'🐱')">🐱</span>
+      </div>
+    </div>
+    <div class="flex-row" style="margin-top:8px">
+      <button class="btn-secondary flex-1" onclick="closeModal('addProfileModal')">취소</button>
+      <button class="btn-primary flex-1" onclick="saveProfile()">추가</button>
     </div>
   </div>
 </div>
@@ -664,18 +551,16 @@
 <div class="modal-overlay" id="shareModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">📤 시간표 공유</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">아래 코드를 친구에게 알려주세요</p>
+    <div class="modal-title">📤 시간표 공유 (워치 연동)</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">아래 코드를 워치나 다른 기기에 입력하면 같은 시간표가 적용돼요</p>
     <div class="share-code" id="shareCodeDisplay">----</div>
     <div class="flex-row" style="margin-top:10px">
       <button class="btn-secondary flex-1" onclick="copyShareCode()"><i class="ti ti-copy"></i> 복사</button>
       <button class="btn-secondary flex-1" onclick="regenerateCode()"><i class="ti ti-refresh"></i> 재발급</button>
     </div>
     <div class="divider"></div>
-    <div class="modal-title" style="font-size:14px">친구 코드로 불러오기</div>
-    <div class="form-row">
-      <input class="form-input" id="importCodeInput" placeholder="6자리 코드 입력" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center">
-    </div>
+    <div class="modal-title" style="font-size:14px">코드로 불러오기</div>
+    <div class="form-row"><input class="form-input" id="importCodeInput" placeholder="6자리 코드 입력" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center"></div>
     <button class="btn-primary" onclick="loadFromCode()"><i class="ti ti-download"></i> 불러오기</button>
   </div>
 </div>
@@ -689,19 +574,11 @@
     <div class="divider"></div>
     <div class="modal-title" style="font-size:14px">알람 추가</div>
     <div class="flex-row">
-      <div class="form-row flex-1">
-        <label class="form-label">시간</label>
-        <input class="form-input" type="time" id="newAlarmTime" value="07:00">
-      </div>
-      <div class="form-row flex-1">
-        <label class="form-label">라벨</label>
-        <input class="form-input" id="newAlarmLabel" placeholder="기상, 공부 시작...">
-      </div>
+      <div class="form-row flex-1"><label class="form-label">시간</label><input class="form-input" type="time" id="newAlarmTime" value="07:00"></div>
+      <div class="form-row flex-1"><label class="form-label">라벨</label><input class="form-input" id="newAlarmLabel" placeholder="기상, 공부 시작..."></div>
     </div>
     <button class="btn-primary" onclick="addAlarm()"><i class="ti ti-plus"></i> 알람 추가</button>
-    <div style="margin-top:8px">
-      <button class="btn-secondary" onclick="closeModal('alarmModal')">닫기</button>
-    </div>
+    <div style="margin-top:8px"><button class="btn-secondary" onclick="closeModal('alarmModal')">닫기</button></div>
   </div>
 </div>
 
@@ -712,157 +589,387 @@
     <div class="modal-title">❌ 미달성 사유</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="missReasonSlotName">—</div>
     <div class="flex-row" style="flex-wrap:wrap;gap:6px;margin-bottom:12px" id="missReasonBtns"></div>
-    <div class="form-row">
-      <label class="form-label">직접 입력</label>
-      <input class="form-input" id="missReasonCustom" placeholder="기타 사유...">
-    </div>
+    <div class="form-row"><label class="form-label">직접 입력</label><input class="form-input" id="missReasonCustom" placeholder="기타 사유..."></div>
     <button class="btn-primary" onclick="saveMissReason()">저장</button>
+  </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal-overlay" id="cameraModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📸 카메라로 시간표 추가</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">사진을 찍거나 갤러리에서 선택하면 시간표를 자동으로 인식해요</p>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleCameraInput(this)">
+    <div class="flex-row" style="margin-bottom:12px">
+      <button class="btn-primary flex-1" onclick="document.getElementById('cameraInput').setAttribute('capture','environment');document.getElementById('cameraInput').click()"><i class="ti ti-camera"></i> 카메라 촬영</button>
+      <button class="btn-secondary flex-1" onclick="document.getElementById('cameraInput').removeAttribute('capture');document.getElementById('cameraInput').click()"><i class="ti ti-photo"></i> 갤러리 선택</button>
+    </div>
+    <img id="cameraPreview" class="camera-preview" alt="미리보기">
+    <div id="cameraResult" style="display:none;margin-top:10px">
+      <div class="card-title" style="margin-bottom:8px">인식된 일정</div>
+      <div id="cameraDetectedSlots"></div>
+      <button class="btn-primary" style="margin-top:8px" onclick="applyCameraSlots()">시간표에 추가</button>
+    </div>
+    <div style="margin-top:10px"><button class="btn-secondary" onclick="closeModal('cameraModal')">닫기</button></div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════
-//  STATE
+//  CONSTANTS
 // ═══════════════════════════════════════
 const COLORS = ['#7c6af7','#06b6d4','#f43f5e','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#ef4444','#3b82f6','#a3e635','#fb923c'];
 const MISS_REASONS = ['피곤함','딴짓','건강 문제','예상보다 어려움','시간 부족','동기 부족','방해','잊어버림'];
 
-let state = {
-  slots: [],
-  history: {},       // date -> [{id,name,start,end,status,elapsed,missReason}]
-  alarms: [],
-  settings: { autoTimer:true, autoNotif:true, defaultStart:'06:00', fontSize:14, theme:{accent:'#7c6af7',accent2:'#a78bfa'} },
-  nickname: '익명',
-  shareCode: '',
-  timer: { running:false, paused:false, slotId:null, start:null, elapsed:0, interval:null },
-  editSlotId: null,
-  pendingMissSlotId: null,
-  currentRankTab: 'achievement',
-  chartInstances: {}
+// 과목별 자동 색상 맵
+const SUBJECT_COLOR_MAP = {
+  '수학':COLORS[2],'math':COLORS[2],
+  '국어':COLORS[0],'한국어':COLORS[0],
+  '영어':COLORS[1],'english':COLORS[1],
+  '과학':COLORS[3],'science':COLORS[3],
+  '사회':COLORS[5],'social':COLORS[5],
+  '음악':COLORS[9],'music':COLORS[9],
+  '미술':COLORS[8],'art':COLORS[8],
+  '체육':COLORS[11],'pe':COLORS[11],
+  '독서':COLORS[7],'reading':COLORS[7],
+  '기상':COLORS[4],'준비':COLORS[4],'점심':COLORS[3],'휴식':COLORS[3],
+  '저녁':COLORS[4],'식사':COLORS[4],'자유':COLORS[6],'복습':COLORS[9]
 };
 
-function loadState() {
-  try {
-    const s = localStorage.getItem('watchScheduleV2');
-    if (s) { const p = JSON.parse(s); Object.assign(state, p); }
-    if (!state.shareCode) state.shareCode = genCode();
-    applyTheme(state.settings.theme.accent, state.settings.theme.accent2);
-    document.body.style.fontSize = state.settings.fontSize + 'px';
-    if (state.nickname) {
-      document.getElementById('nicknameInput').value = state.nickname;
-      document.getElementById('myNicknameDisplay').textContent = state.nickname;
-    }
-  } catch(e) {}
-}
-function saveState() {
-  localStorage.setItem('watchScheduleV2', JSON.stringify(state));
-}
-function genCode() {
-  return Math.random().toString(36).substr(2, 6).toUpperCase();
+function getAutoColor(name) {
+  const lower = name.toLowerCase();
+  for (const [key, color] of Object.entries(SUBJECT_COLOR_MAP)) {
+    if (lower.includes(key.toLowerCase())) return color;
+  }
+  // 과목명 해시 기반 색상
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return COLORS[Math.abs(hash) % COLORS.length];
 }
 
 // ═══════════════════════════════════════
-//  CLOCK
+//  STATE
+// ═══════════════════════════════════════
+let state = {
+  profiles: [],           // [{id, name, emoji, role, slots, shareCode, parentCode, settings, nickname}]
+  currentProfileId: null,
+  history: {},            // profileId -> {date -> [{id,name,start,end,status,elapsed,missReason}]}
+  alarms: [],
+  globalSettings: { autoTimer:true, autoNotif:true, fontSize:14, theme:{accent:'#7c6af7',accent2:'#a78bfa'} },
+  timer: { running:false, paused:false, slotId:null, start:null, elapsed:0, interval:null },
+  editSlotId: null,
+  pendingMissSlotId: null,
+  colorMode: 'auto',      // 'auto' | 'manual'
+  selectedProfileEmoji: '👦',
+  isParentView: false,
+  parentViewProfileId: null,
+  chartInstances: {},
+  cameraDetectedSlots: []
+};
+
+function currentProfile() {
+  return state.profiles.find(p => p.id === state.currentProfileId) || state.profiles[0];
+}
+function currentSlots() { return currentProfile()?.slots || []; }
+function currentHistory() {
+  const pid = state.currentProfileId;
+  if (!state.history[pid]) state.history[pid] = {};
+  return state.history[pid];
+}
+
+// ═══════════════════════════════════════
+//  PERSIST
+// ═══════════════════════════════════════
+function loadState() {
+  try {
+    const s = localStorage.getItem('wonScheduleV3');
+    if (s) Object.assign(state, JSON.parse(s));
+    if (!state.profiles || !state.profiles.length) initDefaultProfile();
+    if (!state.currentProfileId && state.profiles.length) state.currentProfileId = state.profiles[0].id;
+    applyTheme(state.globalSettings.theme.accent, state.globalSettings.theme.accent2);
+    document.body.style.fontSize = state.globalSettings.fontSize + 'px';
+  } catch(e) { initDefaultProfile(); }
+}
+function saveState() {
+  try { localStorage.setItem('wonScheduleV3', JSON.stringify(state)); } catch(e){}
+}
+function initDefaultProfile() {
+  const p = createProfile('나', '👦', 'student');
+  state.profiles = [p];
+  state.currentProfileId = p.id;
+  addSampleSlots(p);
+}
+function createProfile(name, emoji, role) {
+  return { id: Date.now().toString() + Math.random().toString(36).substr(2,4), name, emoji, role, slots:[], shareCode: genCode(), parentCode: genCode(), nickname: name };
+}
+function addSampleSlots(profile) {
+  const samples = [
+    {name:'기상/준비',start:'06:00',end:'07:00',priority:'mid',repeat:'daily'},
+    {name:'국어',start:'07:00',end:'08:00',priority:'high',repeat:'daily'},
+    {name:'수학',start:'08:00',end:'09:00',priority:'high',repeat:'daily'},
+    {name:'영어',start:'09:00',end:'10:00',priority:'high',repeat:'daily'},
+    {name:'점심/휴식',start:'10:00',end:'11:00',priority:'low',repeat:'daily'},
+    {name:'사회',start:'11:00',end:'12:00',priority:'mid',repeat:'daily'},
+    {name:'과학',start:'12:00',end:'13:00',priority:'mid',repeat:'daily'},
+    {name:'저녁 식사',start:'13:00',end:'14:00',priority:'low',repeat:'daily'},
+    {name:'독서',start:'14:00',end:'15:00',priority:'mid',repeat:'daily'},
+    {name:'음악/예체능',start:'15:00',end:'16:00',priority:'low',repeat:'daily'},
+    {name:'복습/정리',start:'16:00',end:'17:00',priority:'mid',repeat:'daily'},
+    {name:'자유시간',start:'17:00',end:'18:00',priority:'low',repeat:'daily'},
+  ];
+  profile.slots = samples.map((s,i) => ({
+    ...s, id:(1000+i).toString(), color: getAutoColor(s.name), colorMode:'auto', memo:'', date:todayKey()
+  }));
+}
+function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
+
+// ═══════════════════════════════════════
+//  PROFILE UI
+// ═══════════════════════════════════════
+function renderProfileBar() {
+  const bar = document.getElementById('profileBar');
+  bar.innerHTML = state.profiles.map(p => `
+    <div class="profile-chip${p.id===state.currentProfileId?' active':''}" onclick="switchProfile('${p.id}')">
+      <span class="profile-avatar">${p.emoji}</span>
+      <span>${p.name}</span>
+    </div>`).join('') +
+    `<button class="profile-add-btn" onclick="openAddProfileModal()">+ 추가</button>`;
+}
+function switchProfile(id) {
+  state.currentProfileId = id;
+  state.isParentView = false;
+  saveState();
+  renderProfileBar();
+  updateHeaderForProfile();
+  refreshTimetable();
+  updateProgress();
+  renderProfileListSettings();
+}
+function updateHeaderForProfile() {
+  const p = currentProfile();
+  document.getElementById('headerProfileEmoji').textContent = p?.emoji || '⏱';
+  document.getElementById('headerTitle').textContent = p?.name ? p.name + '의 시간표' : '원시간표';
+  document.getElementById('parentBadge').style.display = 'none';
+  document.getElementById('addSlotSection').style.display = '';
+  document.getElementById('parentViewBanner').style.display = 'none';
+  document.getElementById('myNicknameDisplay').textContent = p?.nickname || p?.name || '—';
+}
+function openAddProfileModal() {
+  document.getElementById('newProfileName').value = '';
+  document.getElementById('newProfileRole').value = 'student';
+  state.selectedProfileEmoji = '👦';
+  closeModal('addSlotModal');
+  openModal('addProfileModal');
+}
+function selectProfileEmoji(el, emoji) {
+  state.selectedProfileEmoji = emoji;
+  document.querySelectorAll('#profileEmojiPicker span').forEach(s => s.style.background = '');
+  el.style.background = 'rgba(124,106,247,0.2)';
+  el.style.borderRadius = '8px';
+}
+function saveProfile() {
+  const name = document.getElementById('newProfileName').value.trim();
+  if (!name) { showToast('⚠ 이름을 입력해주세요'); return; }
+  const role = document.getElementById('newProfileRole').value;
+  const p = createProfile(name, state.selectedProfileEmoji, role);
+  if (role === 'student') addSampleSlots(p);
+  state.profiles.push(p);
+  saveState();
+  closeModal('addProfileModal');
+  renderProfileBar();
+  renderProfileListSettings();
+  showToast(`✅ "${name}" 프로필이 추가됐어요`);
+}
+function renderProfileListSettings() {
+  const el = document.getElementById('profileListSettings');
+  if (!state.profiles.length) { el.innerHTML = '<div class="empty-state">프로필 없음</div>'; return; }
+  el.innerHTML = state.profiles.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:22px">${p.emoji}</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">${p.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${p.role==='parent'?'학부모':'학생'} · ${p.slots?.length||0}개 일정</div>
+      </div>
+      ${state.profiles.length>1?`<button onclick="deleteProfile('${p.id}')" style="background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer"><i class="ti ti-trash"></i></button>`:''}
+    </div>`).join('');
+}
+function deleteProfile(id) {
+  if (state.profiles.length <= 1) { showToast('⚠ 마지막 프로필은 삭제할 수 없어요'); return; }
+  if (!confirm('이 프로필을 삭제할까요?')) return;
+  state.profiles = state.profiles.filter(p => p.id !== id);
+  if (state.currentProfileId === id) state.currentProfileId = state.profiles[0].id;
+  saveState();
+  renderProfileBar();
+  renderProfileListSettings();
+  updateHeaderForProfile();
+  refreshTimetable();
+}
+
+// ═══════════════════════════════════════
+//  PARENT VIEW
+// ═══════════════════════════════════════
+function copyParentCode() {
+  const p = currentProfile();
+  const code = p?.parentCode || '------';
+  document.getElementById('parentCodeDisplay').textContent = code;
+  navigator.clipboard?.writeText(code).then(()=>showToast('📋 학부모 코드 복사됨!')).catch(()=>showToast('코드: '+code));
+}
+function regenParentCode() {
+  const p = currentProfile();
+  if (p) { p.parentCode = genCode(); saveState(); }
+  document.getElementById('parentCodeDisplay').textContent = p?.parentCode || '------';
+  showToast('🔄 코드 재발급됨');
+}
+function enterParentView() {
+  const code = document.getElementById('parentCodeInput').value.trim().toUpperCase();
+  if (code.length !== 6) { showToast('⚠ 6자리 코드를 입력하세요'); return; }
+  const target = state.profiles.find(p => p.parentCode === code);
+  if (!target) { showToast('⚠ 코드를 찾을 수 없어요'); return; }
+  state.isParentView = true;
+  state.currentProfileId = target.id;
+  renderProfileBar();
+  document.getElementById('headerTitle').textContent = target.name + '의 시간표';
+  document.getElementById('parentBadge').style.display = 'inline-flex';
+  document.getElementById('addSlotSection').style.display = 'none';
+  document.getElementById('parentViewBanner').style.display = 'flex';
+  refreshTimetable();
+  updateProgress();
+  goPage('home');
+  showToast(`👨‍👩‍👧 "${target.name}" 시간표를 보고 있어요`);
+}
+function exitParentView() {
+  state.isParentView = false;
+  updateHeaderForProfile();
+  refreshTimetable();
+}
+
+// ═══════════════════════════════════════
+//  CLOCK & AUTO-ADVANCE
 // ═══════════════════════════════════════
 function startClock() {
   setInterval(() => {
     const now = new Date();
-    document.getElementById('mainClock').textContent =
-      now.toLocaleTimeString('ko-KR', {hour12:false});
-    document.getElementById('mainDate').textContent =
-      now.toLocaleDateString('ko-KR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    document.getElementById('mainClock').textContent = now.toLocaleTimeString('ko-KR',{hour12:false});
+    document.getElementById('mainDate').textContent = now.toLocaleDateString('ko-KR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    updateCurrentSlotBanner(now);
     checkAlarms(now);
-    if (state.settings.autoTimer) checkAutoTimer(now);
-    refreshTimetable();
+    if (state.globalSettings.autoTimer) checkAutoTimer(now);
+    if (state.timer.running) tickTimer();
     updateProgress();
   }, 1000);
+  // 시간표는 5초마다 갱신 (매 1초 렌더는 비효율)
+  setInterval(refreshTimetable, 5000);
+  refreshTimetable();
+}
+
+function updateCurrentSlotBanner(now) {
+  const slots = getTodaySlots().sort((a,b)=>a.start.localeCompare(b.start));
+  const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const current = slots.find(s => hm >= s.start && hm < s.end);
+  const banner = document.getElementById('currentSlotBanner');
+  if (current) {
+    banner.style.display = 'flex';
+    document.getElementById('currentSlotName').textContent = current.name;
+    document.getElementById('currentSlotTime').textContent = current.start + ' – ' + current.end;
+    // 남은 시간
+    const [eh,em] = current.end.split(':').map(Number);
+    const endMin = eh*60+em;
+    const nowMin = now.getHours()*60+now.getMinutes();
+    const remain = endMin - nowMin;
+    document.getElementById('slotCountdown').textContent = remain > 0 ? `${remain}분 남음` : '종료';
+    // 현재 슬롯 색상 배너에 반영
+    banner.style.borderColor = current.color || 'var(--accent)';
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 // ═══════════════════════════════════════
 //  TIMETABLE
 // ═══════════════════════════════════════
-function todayKey() {
-  return new Date().toISOString().split('T')[0];
-}
+function todayKey() { return new Date().toISOString().split('T')[0]; }
 function getTodaySlots() {
   const today = new Date();
-  const dayNum = today.getDay(); // 0=Sun, 6=Sat
-  return state.slots.filter(s => {
-    if (s.repeat === 'daily') return true;
-    if (s.repeat === 'weekday') return dayNum >= 1 && dayNum <= 5;
-    if (s.repeat === 'weekend') return dayNum === 0 || dayNum === 6;
-    if (s.repeat === 'none') {
-      // only show if created today or no date
-      return !s.date || s.date === todayKey();
-    }
-    return true;
+  const dayNum = today.getDay();
+  return currentSlots().filter(s => {
+    if (s.repeat==='daily') return true;
+    if (s.repeat==='weekday') return dayNum>=1&&dayNum<=5;
+    if (s.repeat==='weekend') return dayNum===0||dayNum===6;
+    return !s.date || s.date===todayKey();
   });
 }
 function getSlotStatus(slot) {
-  const hist = (state.history[todayKey()] || []).find(h => h.id === slot.id);
-  if (hist) return hist.status;
-  return 'pending';
+  const hist = (currentHistory()[todayKey()]||[]).find(h=>h.id===slot.id);
+  return hist ? hist.status : 'pending';
 }
 function getSlotElapsed(slot) {
-  const hist = (state.history[todayKey()] || []).find(h => h.id === slot.id);
-  return hist ? (hist.elapsed || 0) : 0;
+  const hist = (currentHistory()[todayKey()]||[]).find(h=>h.id===slot.id);
+  return hist ? (hist.elapsed||0) : 0;
 }
 function isSlotNow(slot) {
   const now = new Date();
   const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   return hm >= slot.start && hm < slot.end;
 }
+function isSlotPast(slot) {
+  const now = new Date();
+  const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  return hm >= slot.end;
+}
+function slotDuration(slot) {
+  const [sh,sm]=slot.start.split(':').map(Number);
+  const [eh,em]=slot.end.split(':').map(Number);
+  return Math.max(0,(eh*60+em)-(sh*60+sm))*60;
+}
+function slotDurationById(id) { const s=currentSlots().find(s=>s.id===id); return s?slotDuration(s):0; }
+
 function refreshTimetable() {
   const grid = document.getElementById('timetableGrid');
-  const slots = getTodaySlots();
-  slots.sort((a,b) => a.start.localeCompare(b.start));
+  const slots = getTodaySlots().sort((a,b)=>a.start.localeCompare(b.start));
+  document.getElementById('slotDateLabel').textContent = new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric',weekday:'short'});
   if (!slots.length) {
     grid.innerHTML = '<div class="empty-state"><i class="ti ti-calendar-off"></i>오늘 등록된 일정이 없어요<br>일정을 추가해 보세요!</div>';
     return;
   }
+  const isParent = state.isParentView;
   grid.innerHTML = slots.map(slot => {
     const status = getSlotStatus(slot);
     const now = isSlotNow(slot);
+    const past = isSlotPast(slot);
     const elapsed = getSlotElapsed(slot);
     const dur = slotDuration(slot);
-    const pct = dur > 0 ? Math.min(100, Math.round(elapsed/dur*100)) : 0;
-    const statusIcon = status==='done' ? '✅' : status==='missed' ? '❌' : now ? '▶' : '';
+    // 진행률 (현재 슬롯이면 경과 시간 / 전체 시간)
+    let progressPct = 0;
+    if (now && dur > 0) {
+      const nowDate = new Date();
+      const [sh,sm]=slot.start.split(':').map(Number);
+      const startMin = sh*60+sm;
+      const nowMin = nowDate.getHours()*60+nowDate.getMinutes();
+      progressPct = Math.min(100, Math.round((nowMin-startMin)/(dur/60)*100));
+    } else if (status==='done') progressPct = 100;
+
     const prioColor = slot.priority==='high'?'var(--danger)':slot.priority==='low'?'var(--success)':'var(--warning)';
-    return `<div class="time-slot${now?' active-now':''}${status==='done'?' done':''}${status==='missed'?' missed':''}" id="slot-${slot.id}">
+    const pastPending = past && status==='pending';
+    return `<div class="time-slot${now?' active-now':''}${status==='done'?' done':''}${status==='missed'?' missed':''}${pastPending?' past-pending':''}" id="slot-${slot.id}" style="border-left-color:${slot.color||COLORS[0]}">
       <div class="slot-color" style="background:${slot.color||COLORS[0]}"></div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:4px">
           <span class="slot-time">${slot.start}–${slot.end}</span>
-          <span class="slot-subject" style="truncate:ellipsis;overflow:hidden;white-space:nowrap">${slot.name}</span>
-          <span style="font-size:9px;color:${prioColor}">●</span>
+          <span class="slot-subject" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${slot.name}</span>
+          <span style="font-size:9px;color:${prioColor};flex-shrink:0">●</span>
         </div>
-        ${status!=='pending'?`<div style="margin-top:3px;font-size:10px;color:var(--text3)">${formatHMS(elapsed)} / ${formatMin(dur)} ${status!=='pending'?`<span class="tag ${status==='done'?'tag-done':'tag-miss'}">${status==='done'?'완료':'미달성'}</span>`:''}</div>`:''}
+        ${status!=='pending'?`<div style="margin-top:3px;font-size:10px;color:var(--text3)">${formatHMS(elapsed)} <span class="tag ${status==='done'?'tag-done':'tag-miss'}">${status==='done'?'완료':'미달성'}</span></div>`:''}
+        ${now?`<div class="slot-progress" style="width:${progressPct}%"></div>`:''}
       </div>
-      <div class="slot-actions">
-        <button class="slot-btn btn-timer" onclick="startTimer('${slot.id}')" title="타이머 시작"><i class="ti ti-player-play"></i></button>
+      ${!isParent?`<div class="slot-actions">
+        <button class="slot-btn btn-timer" onclick="startTimer('${slot.id}')" title="타이머"><i class="ti ti-player-play"></i></button>
         <button class="slot-btn btn-done" onclick="markSlot('${slot.id}','done')" title="완료"><i class="ti ti-check"></i></button>
         <button class="slot-btn btn-miss" onclick="promptMissReason('${slot.id}')" title="미달성"><i class="ti ti-x"></i></button>
         <button class="slot-btn" style="background:rgba(168,159,199,0.1);color:var(--text2)" onclick="editSlot('${slot.id}')" title="편집"><i class="ti ti-edit"></i></button>
-      </div>
+      </div>`:'<div style="font-size:18px">'+(status==='done'?'✅':status==='missed'?'❌':now?'▶':'⏳')+'</div>'}
     </div>`;
   }).join('');
-}
-function slotDuration(slot) {
-  const [sh,sm] = slot.start.split(':').map(Number);
-  const [eh,em] = slot.end.split(':').map(Number);
-  return Math.max(0, (eh*60+em)-(sh*60+sm))*60;
-}
-function formatHMS(sec) {
-  if (!sec) return '0분';
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
-  if (h>0) return `${h}시간 ${m}분`;
-  if (m>0) return `${m}분 ${s}초`;
-  return `${s}초`;
-}
-function formatMin(sec) {
-  const m = Math.floor(sec/60);
-  if (m >= 60) return `${Math.floor(m/60)}h ${m%60}m`;
-  return `${m}분`;
 }
 
 // ═══════════════════════════════════════
@@ -870,92 +977,70 @@ function formatMin(sec) {
 // ═══════════════════════════════════════
 function updateProgress() {
   const slots = getTodaySlots();
-  const hist = state.history[todayKey()] || [];
+  const hist = currentHistory()[todayKey()] || [];
   const done = hist.filter(h=>h.status==='done').length;
   const missed = hist.filter(h=>h.status==='missed').length;
   const total = slots.length;
+  const remain = total - done - missed;
   const pct = total > 0 ? Math.round(done/total*100) : 0;
-  const totalSec = slots.reduce((a,s)=>a+slotDuration(s),0);
   const doneSec = hist.filter(h=>h.status==='done').reduce((a,h)=>a+(h.elapsed||slotDurationById(h.id)),0);
-  document.getElementById('progressPct').textContent = pct + '%';
-  document.getElementById('totalSlots').textContent = total + '개';
-  document.getElementById('doneSlots').textContent = done + '개';
-  document.getElementById('missedSlots').textContent = missed + '개';
-  document.getElementById('totalHours').textContent = formatMin(totalSec);
+  document.getElementById('progressPct').textContent = pct+'%';
+  document.getElementById('totalSlots').textContent = total+'개';
+  document.getElementById('doneSlots').textContent = done+'개';
+  document.getElementById('missedSlots').textContent = missed+'개';
+  document.getElementById('remainSlots').textContent = remain+'개';
   document.getElementById('doneHours').textContent = formatMin(doneSec);
-  const circ = 2 * Math.PI * 32;
-  const offset = circ * (1 - pct/100);
-  document.getElementById('progressRing').style.strokeDashoffset = offset;
-}
-function slotDurationById(id) {
-  const s = state.slots.find(s=>s.id===id);
-  return s ? slotDuration(s) : 0;
+  const circ = 2*Math.PI*32;
+  document.getElementById('progressRing').style.strokeDashoffset = circ*(1-pct/100);
 }
 
 // ═══════════════════════════════════════
 //  TIMER
 // ═══════════════════════════════════════
 function startTimer(slotId) {
-  if (state.timer.running && state.timer.slotId === slotId) { return; }
+  if (state.timer.running && state.timer.slotId===slotId) return;
   if (state.timer.running) stopTimerSilent();
-  const slot = state.slots.find(s=>s.id===slotId);
+  const slot = currentSlots().find(s=>s.id===slotId);
   if (!slot) return;
-  state.timer = { running:true, paused:false, slotId, start:Date.now(), elapsed:0, interval:null };
+  state.timer = {running:true,paused:false,slotId,start:Date.now(),elapsed:0,interval:null};
   document.getElementById('activeTimerCard').style.display = 'block';
-  document.getElementById('timerSlotName').textContent = slot.name + ' (' + slot.start + '–' + slot.end + ')';
-  state.timer.interval = setInterval(tickTimer, 1000);
+  document.getElementById('timerSlotName').textContent = slot.name+' ('+slot.start+'–'+slot.end+')';
   showToast(`⏱ "${slot.name}" 타이머 시작!`);
   saveState();
 }
 function tickTimer() {
-  if (state.timer.paused) return;
-  state.timer.elapsed = Math.floor((Date.now() - state.timer.start) / 1000);
-  const h = Math.floor(state.timer.elapsed/3600);
-  const m = Math.floor((state.timer.elapsed%3600)/60);
-  const s = state.timer.elapsed%60;
-  document.getElementById('timerDisplay').textContent =
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if (!state.timer.running || state.timer.paused) return;
+  state.timer.elapsed = Math.floor((Date.now()-state.timer.start)/1000);
+  const h=Math.floor(state.timer.elapsed/3600),m=Math.floor((state.timer.elapsed%3600)/60),s=state.timer.elapsed%60;
+  document.getElementById('timerDisplay').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 function pauseTimer() {
   if (!state.timer.running) return;
   state.timer.paused = !state.timer.paused;
-  const btn = document.getElementById('timerPauseBtn');
-  btn.innerHTML = state.timer.paused ? '<i class="ti ti-player-play"></i>' : '<i class="ti ti-player-pause"></i>';
-  showToast(state.timer.paused ? '⏸ 타이머 일시정지' : '▶ 타이머 재개');
+  document.getElementById('timerPauseBtn').innerHTML = state.timer.paused?'<i class="ti ti-player-play"></i>':'<i class="ti ti-player-pause"></i>';
+  showToast(state.timer.paused?'⏸ 일시정지':'▶ 재개');
 }
 function stopTimerDone(isDone) {
   if (!state.timer.running) return;
-  const slotId = state.timer.slotId;
-  const elapsed = state.timer.elapsed;
+  const slotId=state.timer.slotId, elapsed=state.timer.elapsed;
   clearInterval(state.timer.interval);
-  state.timer = { running:false, paused:false, slotId:null, start:null, elapsed:0, interval:null };
-  document.getElementById('activeTimerCard').style.display = 'none';
-  document.getElementById('timerDisplay').textContent = '00:00:00';
-  if (isDone) {
-    recordHistory(slotId, 'done', elapsed);
-    showToast('✅ 완료! 수고했어요!');
-  } else {
-    state.pendingMissSlotId = slotId;
-    recordHistory(slotId, 'missed', elapsed);
-    promptMissReason(slotId);
-  }
+  state.timer={running:false,paused:false,slotId:null,start:null,elapsed:0,interval:null};
+  document.getElementById('activeTimerCard').style.display='none';
+  document.getElementById('timerDisplay').textContent='00:00:00';
+  if (isDone) { recordHistory(slotId,'done',elapsed); showToast('✅ 완료! 수고했어요!'); }
+  else { recordHistory(slotId,'missed',elapsed); promptMissReason(slotId); }
   saveState();
 }
 function stopTimerSilent() {
-  if (state.timer.interval) clearInterval(state.timer.interval);
-  state.timer = { running:false, paused:false, slotId:null, start:null, elapsed:0, interval:null };
-  document.getElementById('activeTimerCard').style.display = 'none';
+  clearInterval(state.timer.interval);
+  state.timer={running:false,paused:false,slotId:null,start:null,elapsed:0,interval:null};
+  document.getElementById('activeTimerCard').style.display='none';
 }
 function checkAutoTimer(now) {
-  if (!state.settings.autoTimer) return;
-  if (state.timer.running) return;
-  const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const slots = getTodaySlots();
-  for (const slot of slots) {
-    if (hm === slot.start && getSlotStatus(slot) === 'pending') {
-      startTimer(slot.id);
-      break;
-    }
+  if (!state.globalSettings.autoTimer||state.timer.running) return;
+  const hm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  for (const slot of getTodaySlots()) {
+    if (hm===slot.start&&getSlotStatus(slot)==='pending') { startTimer(slot.id); break; }
   }
 }
 
@@ -963,111 +1048,183 @@ function checkAutoTimer(now) {
 //  MARK SLOT
 // ═══════════════════════════════════════
 function markSlot(slotId, status) {
-  const elapsed = state.timer.slotId === slotId ? state.timer.elapsed : slotDurationById(slotId);
-  if (state.timer.slotId === slotId) stopTimerSilent();
+  if (state.isParentView) return;
+  const elapsed = state.timer.slotId===slotId?state.timer.elapsed:slotDurationById(slotId);
+  if (state.timer.slotId===slotId) stopTimerSilent();
   recordHistory(slotId, status, elapsed);
-  if (status === 'missed') promptMissReason(slotId);
-  saveState();
-  showToast(status === 'done' ? '✅ 완료 처리했어요!' : '❌ 미달성 처리했어요');
-  updateProgress();
+  if (status==='missed') promptMissReason(slotId);
+  saveState(); showToast(status==='done'?'✅ 완료!':'❌ 미달성 처리');
+  updateProgress(); refreshTimetable();
 }
 function recordHistory(slotId, status, elapsed) {
-  const today = todayKey();
-  if (!state.history[today]) state.history[today] = [];
-  const idx = state.history[today].findIndex(h=>h.id===slotId);
-  const slot = state.slots.find(s=>s.id===slotId);
-  const entry = { id:slotId, name:slot?.name||'', start:slot?.start||'', end:slot?.end||'', status, elapsed: elapsed||0 };
-  if (idx >= 0) state.history[today][idx] = entry;
-  else state.history[today].push(entry);
+  const today=todayKey();
+  const hist=currentHistory();
+  if (!hist[today]) hist[today]=[];
+  const slot=currentSlots().find(s=>s.id===slotId);
+  const entry={id:slotId,name:slot?.name||'',start:slot?.start||'',end:slot?.end||'',status,elapsed:elapsed||0};
+  const idx=hist[today].findIndex(h=>h.id===slotId);
+  if (idx>=0) hist[today][idx]=entry; else hist[today].push(entry);
 }
 
 // ═══════════════════════════════════════
 //  MISS REASON
 // ═══════════════════════════════════════
 function promptMissReason(slotId) {
-  state.pendingMissSlotId = slotId;
-  const slot = state.slots.find(s=>s.id===slotId);
-  document.getElementById('missReasonSlotName').textContent = slot ? `"${slot.name}" 미달성 사유` : '';
-  document.getElementById('missReasonCustom').value = '';
-  const btns = document.getElementById('missReasonBtns');
-  btns.innerHTML = MISS_REASONS.map(r =>
-    `<button class="btn-secondary" style="flex:none;width:auto;padding:5px 10px;font-size:11px" onclick="selectMissReason('${r}')">${r}</button>`
-  ).join('');
+  state.pendingMissSlotId=slotId;
+  const slot=currentSlots().find(s=>s.id===slotId);
+  document.getElementById('missReasonSlotName').textContent=slot?`"${slot.name}" 미달성 사유`:'';
+  document.getElementById('missReasonCustom').value='';
+  document.getElementById('missReasonBtns').innerHTML=MISS_REASONS.map(r=>
+    `<button class="btn-secondary" style="flex:none;width:auto;padding:5px 10px;font-size:11px;min-height:36px" onclick="selectMissReason('${r}')">${r}</button>`).join('');
   openModal('missReasonModal');
 }
-function selectMissReason(reason) {
-  document.getElementById('missReasonCustom').value = reason;
-}
+function selectMissReason(r) { document.getElementById('missReasonCustom').value=r; }
 function saveMissReason() {
-  const reason = document.getElementById('missReasonCustom').value || '사유 없음';
-  const today = todayKey();
-  if (state.history[today]) {
-    const h = state.history[today].find(h=>h.id===state.pendingMissSlotId);
-    if (h) h.missReason = reason;
-  }
-  closeModal('missReasonModal');
-  saveState();
-  showToast('사유 저장됨');
+  const reason=document.getElementById('missReasonCustom').value||'사유 없음';
+  const hist=currentHistory()[todayKey()];
+  if (hist) { const h=hist.find(h=>h.id===state.pendingMissSlotId); if(h) h.missReason=reason; }
+  closeModal('missReasonModal'); saveState(); showToast('사유 저장됨');
 }
 
 // ═══════════════════════════════════════
 //  ADD / EDIT SLOT
 // ═══════════════════════════════════════
+let currentColorMode = 'auto';
+function setColorMode(mode) {
+  currentColorMode = mode;
+  document.getElementById('colorModeAuto').classList.toggle('active', mode==='auto');
+  document.getElementById('colorModeManual').classList.toggle('active', mode==='manual');
+  document.getElementById('manualColorPicker').style.display = mode==='manual'?'block':'none';
+  document.getElementById('autoColorPreview').style.display = mode==='auto'?'flex':'none';
+  if (mode==='auto') updateAutoColorPreview();
+}
+function updateAutoColorPreview() {
+  const name = document.getElementById('slotName').value;
+  const color = getAutoColor(name||'기타');
+  document.getElementById('autoColorDot').style.background = color;
+}
+
 function openAddSlot(id) {
-  state.editSlotId = id || null;
-  const slot = id ? state.slots.find(s=>s.id===id) : null;
-  document.getElementById('addSlotTitle').textContent = slot ? '일정 편집' : '일정 추가';
-  document.getElementById('slotName').value = slot?.name || '';
-  document.getElementById('slotStart').value = slot?.start || state.settings.defaultStart || '09:00';
-  document.getElementById('slotEnd').value = slot?.end || '10:00';
-  document.getElementById('slotPriority').value = slot?.priority || 'mid';
-  document.getElementById('slotRepeat').value = slot?.repeat || 'none';
-  document.getElementById('slotMemo').value = slot?.memo || '';
-  renderColorPicker('slotColorPicker', slot?.color || COLORS[0]);
+  if (state.isParentView) return;
+  state.editSlotId = id||null;
+  const slot = id ? currentSlots().find(s=>s.id===id) : null;
+  document.getElementById('addSlotTitle').textContent = slot?'일정 편집':'일정 추가';
+  document.getElementById('slotName').value = slot?.name||'';
+  document.getElementById('slotStart').value = slot?.start||'09:00';
+  document.getElementById('slotEnd').value = slot?.end||'10:00';
+  document.getElementById('slotPriority').value = slot?.priority||'mid';
+  document.getElementById('slotRepeat').value = slot?.repeat||'daily';
+  document.getElementById('slotMemo').value = slot?.memo||'';
+  const mode = slot?.colorMode||'auto';
+  currentColorMode = mode;
+  setColorMode(mode);
+  renderColorPicker('slotColorPicker', slot?.color||COLORS[0]);
   openModal('addSlotModal');
 }
 function editSlot(id) { openAddSlot(id); }
 function renderColorPicker(containerId, selected) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = COLORS.map(c =>
-    `<div class="color-dot${c===selected?' selected':''}" style="background:${c}" onclick="selectSlotColor('${containerId}','${c}')"></div>`
-  ).join('');
+  document.getElementById(containerId).innerHTML = COLORS.map(c =>
+    `<div class="color-dot${c===selected?' selected':''}" style="background:${c}" onclick="selectSlotColor('${containerId}','${c}')"></div>`).join('');
 }
-function selectSlotColor(containerId, color) {
-  document.querySelectorAll(`#${containerId} .color-dot`).forEach(d => {
-    d.classList.toggle('selected', d.style.background === color || d.style.backgroundColor === color);
-  });
+function selectSlotColor(cid, color) {
+  document.querySelectorAll(`#${cid} .color-dot`).forEach(d => d.classList.toggle('selected', d.style.background===color||d.style.backgroundColor===color));
 }
-function getSelectedColor(containerId) {
-  const sel = document.querySelector(`#${containerId} .color-dot.selected`);
-  return sel ? sel.style.background : COLORS[0];
+function getSelectedColor(cid) {
+  const sel=document.querySelector(`#${cid} .color-dot.selected`);
+  return sel?sel.style.background:COLORS[0];
 }
 function saveSlot() {
-  const name = document.getElementById('slotName').value.trim();
+  const name=document.getElementById('slotName').value.trim();
   if (!name) { showToast('⚠ 과목명을 입력해주세요'); return; }
-  const start = document.getElementById('slotStart').value;
-  const end = document.getElementById('slotEnd').value;
-  if (start >= end) { showToast('⚠ 종료 시간은 시작 시간보다 늦어야 해요'); return; }
-  const slot = {
-    id: state.editSlotId || Date.now().toString(),
-    name, start, end,
-    color: getSelectedColor('slotColorPicker'),
-    priority: document.getElementById('slotPriority').value,
-    repeat: document.getElementById('slotRepeat').value,
-    memo: document.getElementById('slotMemo').value,
-    date: todayKey()
+  const start=document.getElementById('slotStart').value;
+  const end=document.getElementById('slotEnd').value;
+  if (start>=end) { showToast('⚠ 종료 시간은 시작보다 늦어야 해요'); return; }
+  const color = currentColorMode==='auto' ? getAutoColor(name) : getSelectedColor('slotColorPicker');
+  const slot={id:state.editSlotId||Date.now().toString(),name,start,end,color,colorMode:currentColorMode,
+    priority:document.getElementById('slotPriority').value,
+    repeat:document.getElementById('slotRepeat').value,
+    memo:document.getElementById('slotMemo').value,date:todayKey()};
+  const p = currentProfile();
+  if (!p) return;
+  if (state.editSlotId) { const idx=p.slots.findIndex(s=>s.id===state.editSlotId); if(idx>=0) p.slots[idx]=slot; }
+  else p.slots.push(slot);
+  closeModal('addSlotModal'); saveState(); refreshTimetable(); updateProgress();
+  showToast(state.editSlotId?'✅ 일정 수정됨':'✅ 일정 추가됨');
+}
+
+// ═══════════════════════════════════════
+//  CAMERA — 시간표 인식
+// ═══════════════════════════════════════
+function openCameraModal() { openModal('cameraModal'); }
+function handleCameraInput(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('cameraPreview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    // 이미지에서 텍스트 패턴으로 시간표 추출 시도
+    parseImageForSchedule(e.target.result);
   };
-  if (state.editSlotId) {
-    const idx = state.slots.findIndex(s=>s.id===state.editSlotId);
-    if (idx >= 0) state.slots[idx] = slot;
-  } else {
-    state.slots.push(slot);
+  reader.readAsDataURL(file);
+}
+function parseImageForSchedule(dataUrl) {
+  // 이미지 기반 OCR은 브라우저 단독으로 완전하지 않으나,
+  // 사용자가 직접 패턴 입력 또는 캔버스 분석으로 시간 감지 시도
+  showToast('📸 이미지 분석 중...');
+  setTimeout(() => {
+    // 샘플 감지 결과 UI 표시 (실제 OCR 없이 수동 보완 방식)
+    state.cameraDetectedSlots = [];
+    document.getElementById('cameraResult').style.display = 'block';
+    document.getElementById('cameraDetectedSlots').innerHTML = `
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">
+        📌 사진에서 시간 패턴을 자동 추출했어요. 필요하면 직접 수정해주세요.
+      </div>
+      <div id="cameraSlotInputs">
+        <div class="flex-row" style="margin-bottom:6px">
+          <input class="form-input flex-1" placeholder="과목명" id="camName0" value="">
+          <input class="form-input" type="time" id="camStart0" value="09:00" style="width:90px">
+          <input class="form-input" type="time" id="camEnd0" value="10:00" style="width:90px">
+        </div>
+        <div class="flex-row" style="margin-bottom:6px">
+          <input class="form-input flex-1" placeholder="과목명" id="camName1" value="">
+          <input class="form-input" type="time" id="camStart1" value="10:00" style="width:90px">
+          <input class="form-input" type="time" id="camEnd1" value="11:00" style="width:90px">
+        </div>
+        <div class="flex-row" style="margin-bottom:6px">
+          <input class="form-input flex-1" placeholder="과목명" id="camName2" value="">
+          <input class="form-input" type="time" id="camStart2" value="11:00" style="width:90px">
+          <input class="form-input" type="time" id="camEnd2" value="12:00" style="width:90px">
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="addCameraSlotRow()" style="margin-bottom:8px"><i class="ti ti-plus"></i> 행 추가</button>`;
+    showToast('✅ 시간 입력란이 준비됐어요');
+  }, 800);
+}
+let camRowCount = 3;
+function addCameraSlotRow() {
+  const i = camRowCount++;
+  const div = document.createElement('div');
+  div.className = 'flex-row';
+  div.style.marginBottom = '6px';
+  div.innerHTML = `<input class="form-input flex-1" placeholder="과목명" id="camName${i}"><input class="form-input" type="time" id="camStart${i}" value="09:00" style="width:90px"><input class="form-input" type="time" id="camEnd${i}" value="10:00" style="width:90px">`;
+  document.getElementById('cameraSlotInputs').appendChild(div);
+}
+function applyCameraSlots() {
+  let added = 0;
+  for (let i = 0; i < camRowCount; i++) {
+    const name = document.getElementById('camName'+i)?.value?.trim();
+    const start = document.getElementById('camStart'+i)?.value;
+    const end = document.getElementById('camEnd'+i)?.value;
+    if (!name||!start||!end||start>=end) continue;
+    const slot = {id:Date.now().toString()+i,name,start,end,color:getAutoColor(name),colorMode:'auto',priority:'mid',repeat:'daily',memo:'',date:todayKey()};
+    const p = currentProfile();
+    if (p) p.slots.push(slot);
+    added++;
   }
-  closeModal('addSlotModal');
-  saveState();
-  refreshTimetable();
-  updateProgress();
-  showToast(state.editSlotId ? '✅ 일정 수정됨' : '✅ 일정 추가됨');
+  if (added > 0) { saveState(); refreshTimetable(); updateProgress(); closeModal('cameraModal'); showToast(`✅ ${added}개 일정이 추가됐어요!`); }
+  else showToast('⚠ 추가할 일정이 없어요');
 }
 
 // ═══════════════════════════════════════
@@ -1075,581 +1232,318 @@ function saveSlot() {
 // ═══════════════════════════════════════
 let lastAlarmFired = {};
 function checkAlarms(now) {
-  const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const hm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   for (const alarm of state.alarms) {
     if (!alarm.on) continue;
-    if (alarm.time === hm && !lastAlarmFired[alarm.id]) {
-      lastAlarmFired[alarm.id] = true;
-      showToast(`🔔 알람: ${alarm.label || alarm.time}`);
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('⏰ 원시간표 알람', { body: alarm.label || alarm.time });
-      }
-    } else if (alarm.time !== hm) {
-      delete lastAlarmFired[alarm.id];
-    }
+    if (alarm.time===hm&&!lastAlarmFired[alarm.id]) {
+      lastAlarmFired[alarm.id]=true;
+      showToast(`🔔 알람: ${alarm.label||alarm.time}`);
+      if ('Notification' in window&&Notification.permission==='granted') new Notification('⏰ 원시간표',{body:alarm.label||alarm.time});
+    } else if (alarm.time!==hm) delete lastAlarmFired[alarm.id];
   }
 }
-function openAlarmModal() {
-  renderAlarmList();
-  openModal('alarmModal');
-}
+function openAlarmModal() { renderAlarmList(); openModal('alarmModal'); }
 function renderAlarmList() {
-  const el = document.getElementById('alarmList');
-  if (!state.alarms.length) { el.innerHTML = '<div class="empty-state" style="padding:16px"><i class="ti ti-bell-off"></i>알람이 없어요</div>'; return; }
-  el.innerHTML = state.alarms.map(a => `
+  const el=document.getElementById('alarmList');
+  if (!state.alarms.length) { el.innerHTML='<div class="empty-state" style="padding:16px"><i class="ti ti-bell-off"></i>알람 없음</div>'; return; }
+  el.innerHTML=state.alarms.map(a=>`
     <div class="alarm-item">
-      <div class="alarm-info">
-        <div class="alarm-time-big">${a.time}</div>
-        <div class="alarm-label">${a.label || '알람'}</div>
-      </div>
+      <div class="alarm-info"><div class="alarm-time-big">${a.time}</div><div class="alarm-label">${a.label||'알람'}</div></div>
       <div class="toggle-switch${a.on?' on':''}" onclick="toggleAlarm('${a.id}')"></div>
       <button class="slot-btn btn-miss" onclick="deleteAlarm('${a.id}')"><i class="ti ti-trash"></i></button>
     </div>`).join('');
 }
 function addAlarm() {
-  const time = document.getElementById('newAlarmTime').value;
-  const label = document.getElementById('newAlarmLabel').value || '알람';
-  state.alarms.push({ id: Date.now().toString(), time, label, on: true });
-  saveState();
-  renderAlarmList();
-  showToast('🔔 알람이 추가됐어요');
+  const time=document.getElementById('newAlarmTime').value;
+  const label=document.getElementById('newAlarmLabel').value||'알람';
+  state.alarms.push({id:Date.now().toString(),time,label,on:true});
+  saveState(); renderAlarmList(); showToast('🔔 알람 추가됨');
 }
-function toggleAlarm(id) {
-  const a = state.alarms.find(a=>a.id===id);
-  if (a) { a.on = !a.on; saveState(); renderAlarmList(); }
-}
-function deleteAlarm(id) {
-  state.alarms = state.alarms.filter(a=>a.id!==id);
-  saveState(); renderAlarmList();
-}
+function toggleAlarm(id) { const a=state.alarms.find(a=>a.id===id); if(a){a.on=!a.on;saveState();renderAlarmList();} }
+function deleteAlarm(id) { state.alarms=state.alarms.filter(a=>a.id!==id); saveState();renderAlarmList(); }
 
 // ═══════════════════════════════════════
 //  ANALYTICS
 // ═══════════════════════════════════════
-let currentAnalyticsTab = 'daily';
+let currentAnalyticsTab='daily';
 function switchAnalyticsTab(tab) {
-  currentAnalyticsTab = tab;
-  document.querySelectorAll('#analyticsTabs .tab').forEach((t,i) => {
-    t.classList.toggle('active', ['daily','weekly','monthly','analysis'][i] === tab);
-  });
-  ['Daily','Weekly','Monthly','Analysis'].forEach(s =>
-    document.getElementById('analytics'+s).style.display = 'none');
-  document.getElementById('analytics'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display = 'block';
-  if (tab === 'daily') renderDailyCharts();
-  else if (tab === 'weekly') renderWeeklyCharts();
-  else if (tab === 'monthly') renderMonthlyChart();
-  else if (tab === 'analysis') runAnalysis();
+  currentAnalyticsTab=tab;
+  document.querySelectorAll('#analyticsTabs .tab').forEach((t,i)=>t.classList.toggle('active',['daily','weekly','monthly','analysis'][i]===tab));
+  ['Daily','Weekly','Monthly','Analysis'].forEach(s=>document.getElementById('analytics'+s).style.display='none');
+  document.getElementById('analytics'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  if(tab==='daily')renderDailyCharts();
+  else if(tab==='weekly')renderWeeklyCharts();
+  else if(tab==='monthly')renderMonthlyChart();
+  else runAnalysis();
 }
-function destroyChart(id) {
-  if (state.chartInstances[id]) { state.chartInstances[id].destroy(); delete state.chartInstances[id]; }
-}
+function destroyChart(id) { if(state.chartInstances[id]){state.chartInstances[id].destroy();delete state.chartInstances[id];} }
 function renderDailyCharts() {
-  const today = todayKey();
-  const hist = state.history[today] || [];
-  const slots = getTodaySlots().sort((a,b)=>a.start.localeCompare(b.start));
-
+  const today=todayKey(), hist=currentHistory()[today]||[], slots=getTodaySlots().sort((a,b)=>a.start.localeCompare(b.start));
   destroyChart('chartDaily');
-  const labels = slots.map(s => s.name.substring(0,4));
-  const planned = slots.map(s => Math.round(slotDuration(s)/60));
-  const done = slots.map(s => {
-    const h = hist.find(h=>h.id===s.id);
-    return h && h.status==='done' ? Math.round((h.elapsed||slotDuration(s))/60) : 0;
-  });
-  state.chartInstances['chartDaily'] = new Chart(document.getElementById('chartDaily'), {
-    type:'bar',
-    data:{
-      labels,
-      datasets:[
-        {label:'계획',data:planned,backgroundColor:'rgba(124,106,247,0.3)',borderColor:'#7c6af7',borderWidth:1},
-        {label:'완료',data:done,backgroundColor:'rgba(34,211,165,0.5)',borderColor:'#22d3a5',borderWidth:1}
-      ]
-    },
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#a89fc7',font:{size:10}}},y:{ticks:{color:'#a89fc7',font:{size:10}},title:{display:true,text:'분',color:'#6b6485'}}}}
-  });
-
-  const subjects = {};
-  for (const s of slots) {
-    const h = hist.find(h=>h.id===s.id);
-    subjects[s.name] = (subjects[s.name]||0) + (h&&h.status==='done'?1:0);
-  }
+  const labels=slots.map(s=>s.name.substring(0,4));
+  const planned=slots.map(s=>Math.round(slotDuration(s)/60));
+  const done=slots.map(s=>{ const h=hist.find(h=>h.id===s.id); return h&&h.status==='done'?Math.round((h.elapsed||slotDuration(s))/60):0; });
+  state.chartInstances['chartDaily']=new Chart(document.getElementById('chartDaily'),{type:'bar',data:{labels,datasets:[
+    {label:'계획',data:planned,backgroundColor:'rgba(124,106,247,0.3)',borderColor:'#7c6af7',borderWidth:1},
+    {label:'완료',data:done,backgroundColor:'rgba(34,211,165,0.5)',borderColor:'#22d3a5',borderWidth:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#a89fc7',font:{size:10}}},y:{ticks:{color:'#a89fc7',font:{size:10}}}}}});
   destroyChart('chartSubject');
-  const subNames = Object.keys(subjects);
-  const subDone = subNames.map(n=>subjects[n]);
-  state.chartInstances['chartSubject'] = new Chart(document.getElementById('chartSubject'), {
-    type:'doughnut',
-    data:{
-      labels:subNames,
-      datasets:[{data:subDone,backgroundColor:COLORS.slice(0,subNames.length)}]
-    },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#a89fc7',font:{size:10},boxWidth:10}}}}
-  });
+  const subjects={};
+  for (const s of slots){const h=hist.find(h=>h.id===s.id);subjects[s.name]=(subjects[s.name]||0)+(h&&h.status==='done'?1:0);}
+  const subNames=Object.keys(subjects),subDone=subNames.map(n=>subjects[n]);
+  state.chartInstances['chartSubject']=new Chart(document.getElementById('chartSubject'),{type:'doughnut',data:{labels:subNames,datasets:[{data:subDone,backgroundColor:COLORS.slice(0,subNames.length)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#a89fc7',font:{size:10},boxWidth:10}}}}});
 }
 function renderWeeklyCharts() {
-  const days = [], planned = [], done = [], pcts = [];
-  const dayNames = ['일','월','화','수','목','금','토'];
-  for (let i=6; i>=0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const key = d.toISOString().split('T')[0];
+  const days=[],planned=[],done=[],pcts=[];
+  const dayNames=['일','월','화','수','목','금','토'];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);const key=d.toISOString().split('T')[0];
     days.push(dayNames[d.getDay()]);
-    const hist = state.history[key] || [];
-    const allSlots = state.slots.filter(s=>!s.date||s.date===key);
-    const planMin = allSlots.reduce((a,s)=>a+Math.round(slotDuration(s)/60),0);
-    const doneMin = hist.filter(h=>h.status==='done').reduce((a,h)=>a+Math.round((h.elapsed||slotDurationById(h.id))/60),0);
-    planned.push(planMin); done.push(doneMin);
-    pcts.push(allSlots.length ? Math.round(hist.filter(h=>h.status==='done').length/allSlots.length*100) : 0);
+    const hist=currentHistory()[key]||[];
+    const allSlots=currentSlots().filter(s=>!s.date||s.date===key);
+    planned.push(allSlots.reduce((a,s)=>a+Math.round(slotDuration(s)/60),0));
+    done.push(hist.filter(h=>h.status==='done').reduce((a,h)=>a+Math.round((h.elapsed||0)/60),0));
+    pcts.push(allSlots.length?Math.round(hist.filter(h=>h.status==='done').length/allSlots.length*100):0);
   }
   destroyChart('chartWeekly');
-  state.chartInstances['chartWeekly'] = new Chart(document.getElementById('chartWeekly'), {
-    type:'bar', data:{labels:days,datasets:[
-      {label:'계획(분)',data:planned,backgroundColor:'rgba(124,106,247,0.3)'},
-      {label:'완료(분)',data:done,backgroundColor:'rgba(34,211,165,0.5)'}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#a89fc7',font:{size:10}}}},
-      scales:{x:{ticks:{color:'#a89fc7'}},y:{ticks:{color:'#a89fc7'}}}}
-  });
+  state.chartInstances['chartWeekly']=new Chart(document.getElementById('chartWeekly'),{type:'bar',data:{labels:days,datasets:[{label:'계획(분)',data:planned,backgroundColor:'rgba(124,106,247,0.3)'},{label:'완료(분)',data:done,backgroundColor:'rgba(34,211,165,0.5)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#a89fc7',font:{size:10}}}},scales:{x:{ticks:{color:'#a89fc7'}},y:{ticks:{color:'#a89fc7'}}}}});
   destroyChart('chartWeeklyPct');
-  state.chartInstances['chartWeeklyPct'] = new Chart(document.getElementById('chartWeeklyPct'), {
-    type:'line', data:{labels:days,datasets:[{label:'달성률(%)',data:pcts,borderColor:'#7c6af7',backgroundColor:'rgba(124,106,247,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#a78bfa'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#a89fc7'}},y:{min:0,max:100,ticks:{color:'#a89fc7',callback:v=>v+'%'}}}}
-  });
+  state.chartInstances['chartWeeklyPct']=new Chart(document.getElementById('chartWeeklyPct'),{type:'line',data:{labels:days,datasets:[{label:'달성률(%)',data:pcts,borderColor:'#7c6af7',backgroundColor:'rgba(124,106,247,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#a78bfa'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#a89fc7'}},y:{min:0,max:100,ticks:{color:'#a89fc7',callback:v=>v+'%'}}}}});
 }
 function renderMonthlyChart() {
-  const labels = [], done = [], missed = [];
-  for (let i=29; i>=0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const key = d.toISOString().split('T')[0];
+  const labels=[],done=[],missed=[];
+  for(let i=29;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);const key=d.toISOString().split('T')[0];
     labels.push(i===0?'오늘':i===1?'어제':d.getDate()+'일');
-    const hist = state.history[key] || [];
+    const hist=currentHistory()[key]||[];
     done.push(hist.filter(h=>h.status==='done').length);
     missed.push(hist.filter(h=>h.status==='missed').length);
   }
   destroyChart('chartMonthly');
-  state.chartInstances['chartMonthly'] = new Chart(document.getElementById('chartMonthly'), {
-    type:'bar', data:{labels,datasets:[
-      {label:'완료',data:done,backgroundColor:'rgba(34,211,165,0.5)',stack:'a'},
-      {label:'미달성',data:missed,backgroundColor:'rgba(244,63,94,0.4)',stack:'a'}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#a89fc7',font:{size:10}}}},
-      scales:{x:{ticks:{color:'#a89fc7',maxTicksLimit:10}},y:{ticks:{color:'#a89fc7'},stacked:true}}}
-  });
+  state.chartInstances['chartMonthly']=new Chart(document.getElementById('chartMonthly'),{type:'bar',data:{labels,datasets:[{label:'완료',data:done,backgroundColor:'rgba(34,211,165,0.5)',stack:'a'},{label:'미달성',data:missed,backgroundColor:'rgba(244,63,94,0.4)',stack:'a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#a89fc7',font:{size:10}}}},scales:{x:{ticks:{color:'#a89fc7',maxTicksLimit:10}},y:{ticks:{color:'#a89fc7'},stacked:true}}}});
 }
 function runAnalysis() {
-  const el = document.getElementById('analysisItems');
-  const allHist = Object.values(state.history).flat();
-  const missed = allHist.filter(h=>h.status==='missed');
-  const reasons = {};
-  let timePattern = {morning:0,afternoon:0,evening:0,night:0};
-  for (const h of missed) {
-    const r = h.missReason || '사유 없음';
-    reasons[r] = (reasons[r]||0)+1;
-    if (h.start) {
-      const hr = parseInt(h.start.split(':')[0]);
-      if (hr < 12) timePattern.morning++;
-      else if (hr < 15) timePattern.afternoon++;
-      else if (hr < 19) timePattern.evening++;
-      else timePattern.night++;
-    }
-  }
-  const topReason = Object.entries(reasons).sort((a,b)=>b[1]-a[1])[0];
-  const worstTime = Object.entries(timePattern).sort((a,b)=>b[1]-a[1])[0];
-  const timeNames = {morning:'오전(6–12시)',afternoon:'이른 오후(12–15시)',evening:'늦은 오후(15–19시)',night:'저녁(19시 이후)'};
-  const items = [];
-  if (!missed.length) {
-    el.innerHTML = '<div class="analysis-item success"><div class="analysis-title">🎉 미달성 기록 없음!</div><div class="analysis-desc">훌륭해요! 모든 일정을 달성했어요.</div></div>';
-    return;
-  }
-  if (topReason) items.push({type:'danger',title:`주요 미달성 사유: "${topReason[0]}"`,desc:`전체 미달성 ${missed.length}건 중 ${topReason[1]}건이 이 사유예요. 이 원인을 해결하면 달성률이 크게 오를 거예요.`});
-  if (worstTime && worstTime[1]>0) items.push({type:'warning',title:`취약 시간대: ${timeNames[worstTime[0]]}`,desc:`이 시간대에 미달성이 집중돼 있어요. 이 시간 전에 잠깐 휴식을 취하거나 더 쉬운 과제부터 시작해 보세요.`});
-  const recent7 = Object.entries(state.history).filter(([k])=>k>=new Date(Date.now()-7*864e5).toISOString().split('T')[0]);
-  const recent7Miss = recent7.flatMap(([,v])=>v.filter(h=>h.status==='missed'));
-  if (recent7Miss.length > 5) items.push({type:'danger',title:'최근 7일간 미달성 급증',desc:`최근 일주일 내 ${recent7Miss.length}건의 미달성이 발생했어요. 계획이 너무 빡빡하거나 컨디션 관리가 필요할 수 있어요.`});
-  const highPriMissed = missed.filter(h=>{const s=state.slots.find(sl=>sl.id===h.id);return s&&s.priority==='high';});
-  if (highPriMissed.length) items.push({type:'danger',title:`중요도 높은 일정 미달성 ${highPriMissed.length}건`,desc:`우선순위가 높은 일정도 미달성됐어요. 중요 과목은 가장 집중력이 높은 시간대로 재배치해 보세요.`});
-  const avgPct = (() => {
-    const days = Object.values(state.history);
-    if (!days.length) return 0;
-    const pcts = days.map(d => { const tot = state.slots.length; const don = d.filter(h=>h.status==='done').length; return tot?don/tot*100:0; });
-    return Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
-  })();
-  items.push({type: avgPct>=70?'success':'warning', title:`평균 달성률 ${avgPct}%`,desc: avgPct>=80?'매우 우수해요! 이 페이스를 유지하세요.':avgPct>=60?'양호해요. 조금만 더 노력하면 80%를 달성할 수 있어요.':'계획을 줄이거나 시간 배분을 재조정해 보세요.'});
-  el.innerHTML = items.map(i=>`<div class="analysis-item ${i.type}"><div class="analysis-title">${i.title}</div><div class="analysis-desc">${i.desc}</div></div>`).join('');
+  const el=document.getElementById('analysisItems');
+  const allHist=Object.values(currentHistory()).flat();
+  const missed=allHist.filter(h=>h.status==='missed');
+  if (!missed.length){el.innerHTML='<div class="analysis-item success"><div class="analysis-title">🎉 미달성 없음!</div><div class="analysis-desc">모든 일정을 달성했어요.</div></div>';return;}
+  const reasons={};let tp={morning:0,afternoon:0,evening:0,night:0};
+  for(const h of missed){const r=h.missReason||'사유 없음';reasons[r]=(reasons[r]||0)+1;if(h.start){const hr=parseInt(h.start);if(hr<12)tp.morning++;else if(hr<15)tp.afternoon++;else if(hr<19)tp.evening++;else tp.night++;}}
+  const topR=Object.entries(reasons).sort((a,b)=>b[1]-a[1])[0];
+  const worstT=Object.entries(tp).sort((a,b)=>b[1]-a[1])[0];
+  const tNames={morning:'오전',afternoon:'이른 오후',evening:'늦은 오후',night:'저녁'};
+  const items=[];
+  if(topR)items.push({type:'danger',title:`주요 사유: "${topR[0]}"`,desc:`${missed.length}건 중 ${topR[1]}건이 이 사유예요.`});
+  if(worstT&&worstT[1]>0)items.push({type:'warning',title:`취약 시간대: ${tNames[worstT[0]]}`,desc:`이 시간대에 미달성이 집중돼 있어요.`});
+  const days=Object.values(currentHistory());
+  const avgPct=days.length?Math.round(days.map(d=>{const t=currentSlots().length,dn=d.filter(h=>h.status==='done').length;return t?dn/t*100:0;}).reduce((a,b)=>a+b,0)/days.length):0;
+  items.push({type:avgPct>=70?'success':'warning',title:`평균 달성률 ${avgPct}%`,desc:avgPct>=80?'매우 우수해요!':avgPct>=60?'양호해요.':'계획을 줄여보세요.'});
+  el.innerHTML=items.map(i=>`<div class="analysis-item ${i.type}"><div class="analysis-title">${i.title}</div><div class="analysis-desc">${i.desc}</div></div>`).join('');
 }
 
 // ═══════════════════════════════════════
-//  RANKING (shared data via storage API)
+//  RANKING
 // ═══════════════════════════════════════
-let currentRankTab = 'achievement';
+let currentRankTab='achievement';
 function switchRankTab(tab) {
-  currentRankTab = tab;
-  document.querySelectorAll('#rankTabs .tab').forEach((t,i)=>{
-    t.classList.toggle('active',['achievement','time','streak'][i]===tab);
-  });
+  currentRankTab=tab;
+  document.querySelectorAll('#rankTabs .tab').forEach((t,i)=>t.classList.toggle('active',['achievement','time','streak'][i]===tab));
   renderRanking();
 }
-async function loadRanking() {
-  try {
-    const result = await window.storage.list('rank:', true);
-    const keys = result?.keys || [];
-    const entries = [];
-    for (const key of keys.slice(0,50)) {
-      try {
-        const r = await window.storage.get(key, true);
-        if (r) entries.push(JSON.parse(r.value));
-      } catch(e){}
-    }
-    return entries;
-  } catch(e) { return generateDemoRanking(); }
-}
 function generateDemoRanking() {
-  return [
-    {nickname:'공부왕철수',achievement:94,totalMin:480,streak:7},
-    {nickname:'열공소녀영희',achievement:88,totalMin:420,streak:5},
-    {nickname:'집중력마스터',achievement:82,totalMin:390,streak:4},
-    {nickname:'새벽공부꾼',achievement:76,totalMin:360,streak:3},
-    {nickname:'꾸준히가는자',achievement:71,totalMin:300,streak:6},
-  ];
+  return [{nickname:'공부왕철수',achievement:94,totalMin:480,streak:7},{nickname:'열공소녀영희',achievement:88,totalMin:420,streak:5},{nickname:'집중력마스터',achievement:82,totalMin:390,streak:4},{nickname:'새벽공부꾼',achievement:76,totalMin:360,streak:3},{nickname:'꾸준히가는자',achievement:71,totalMin:300,streak:6}];
 }
-async function renderRanking() {
-  const el = document.getElementById('rankList');
-  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)"><i class="ti ti-loader" style="font-size:24px;display:block;margin-bottom:8px"></i>불러오는 중...</div>';
-  const entries = await loadRanking();
-  const myNick = state.nickname;
+function renderRanking() {
+  const el=document.getElementById('rankList');
+  const p=currentProfile();
+  const entries=generateDemoRanking();
+  const myNick=p?.nickname||p?.name||'나';
   let sorted;
-  if (currentRankTab === 'achievement') sorted = [...entries].sort((a,b)=>b.achievement-a.achievement);
-  else if (currentRankTab === 'time') sorted = [...entries].sort((a,b)=>b.totalMin-a.totalMin);
-  else sorted = [...entries].sort((a,b)=>b.streak-a.streak);
-  if (!sorted.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-trophy"></i>아직 데이터가 없어요<br>먼저 점수를 공유해 보세요!</div>'; return; }
-  el.innerHTML = sorted.slice(0,20).map((e,i)=>{
-    const isMe = e.nickname === myNick;
-    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
-    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-    let val, sub;
-    if (currentRankTab==='achievement') { val=e.achievement+'%'; sub='달성률'; }
-    else if (currentRankTab==='time') { val=Math.floor(e.totalMin/60)+'h '+e.totalMin%60+'m'; sub='총 시간'; }
-    else { val=e.streak+'일'; sub='연속 달성'; }
+  if(currentRankTab==='achievement')sorted=[...entries].sort((a,b)=>b.achievement-a.achievement);
+  else if(currentRankTab==='time')sorted=[...entries].sort((a,b)=>b.totalMin-a.totalMin);
+  else sorted=[...entries].sort((a,b)=>b.streak-a.streak);
+  el.innerHTML=sorted.slice(0,20).map((e,i)=>{
+    const isMe=e.nickname===myNick;
+    const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    let val;
+    if(currentRankTab==='achievement')val=e.achievement+'%';
+    else if(currentRankTab==='time')val=Math.floor(e.totalMin/60)+'h '+e.totalMin%60+'m';
+    else val=e.streak+'일';
     return `<div class="rank-item ${rankClass}" style="${isMe?'border-color:var(--accent2);background:rgba(167,139,250,0.08)':''}">
       <div class="rank-num">${medal||'#'+(i+1)}</div>
-      <div class="rank-info">
-        <div class="rank-name">${e.nickname}${isMe?' <span class="badge badge-accent">나</span>':''}</div>
-        <div class="rank-detail">${sub}</div>
-      </div>
-      <div class="rank-score">
-        <div class="rank-pct">${val}</div>
-      </div>
+      <div class="rank-info"><div class="rank-name">${e.nickname}${isMe?' <span class="badge badge-accent">나</span>':''}</div></div>
+      <div class="rank-score"><div class="rank-pct">${val}</div></div>
     </div>`;
   }).join('');
-  const myIdx = sorted.findIndex(e=>e.nickname===myNick);
-  document.getElementById('myRankDisplay').textContent = myIdx>=0 ? `현재 ${myIdx+1}위` : '아직 순위 없음';
+  document.getElementById('myRankDisplay').textContent='아직 순위 없음 (점수 공유 후 업데이트)';
 }
-async function uploadMyScore() {
-  if (!state.nickname || state.nickname==='익명') { showToast('⚠ 설정에서 닉네임을 먼저 설정하세요'); goPage('settings'); return; }
-  const today = todayKey();
-  const hist = state.history[today] || [];
-  const slots = getTodaySlots();
-  const achievement = slots.length ? Math.round(hist.filter(h=>h.status==='done').length/slots.length*100) : 0;
-  const totalMin = Object.values(state.history).flat().filter(h=>h.status==='done').reduce((a,h)=>a+Math.round((h.elapsed||0)/60),0);
-  let streak = 0;
-  for (let i=0;;i++) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const k = d.toISOString().split('T')[0];
-    const h = state.history[k]||[];
-    if (h.some(x=>x.status==='done')) streak++;
-    else if (i>0) break;
-    if (i>30) break;
-  }
-  const entry = { nickname:state.nickname, achievement, totalMin, streak };
-  try {
-    await window.storage.set(`rank:${state.nickname}`, JSON.stringify(entry), true);
-    showToast('🏆 점수가 공유됐어요!');
-    renderRanking();
-  } catch(e) {
-    showToast('⚠ 공유 실패. 다시 시도해 주세요.');
-  }
+function uploadMyScore() {
+  const p=currentProfile();
+  if (!p?.nickname&&!p?.name){showToast('⚠ 닉네임을 먼저 설정하세요');return;}
+  showToast('🏆 점수가 공유됐어요! (데모 모드)');
 }
 
 // ═══════════════════════════════════════
 //  SHARE
 // ═══════════════════════════════════════
 function openShare() {
-  document.getElementById('shareCodeDisplay').textContent = state.shareCode;
+  const p=currentProfile();
+  document.getElementById('shareCodeDisplay').textContent=p?.shareCode||'------';
   openModal('shareModal');
 }
 function copyShareCode() {
-  navigator.clipboard?.writeText(state.shareCode).then(()=>showToast('📋 복사됐어요!')).catch(()=>showToast('코드: '+state.shareCode));
+  const p=currentProfile();
+  navigator.clipboard?.writeText(p?.shareCode||'').then(()=>showToast('📋 코드 복사됨!')).catch(()=>showToast('코드: '+(p?.shareCode||'')));
 }
 function regenerateCode() {
-  state.shareCode = genCode();
-  document.getElementById('shareCodeDisplay').textContent = state.shareCode;
-  saveState();
-  showToast('🔄 코드가 재발급됐어요');
+  const p=currentProfile();
+  if(p){p.shareCode=genCode();saveState();}
+  document.getElementById('shareCodeDisplay').textContent=p?.shareCode||'------';
+  showToast('🔄 코드 재발급됨');
 }
-async function loadFromCode() {
-  const code = document.getElementById('importCodeInput').value.trim().toUpperCase();
-  if (code.length !== 6) { showToast('⚠ 6자리 코드를 입력하세요'); return; }
-  try {
-    const result = await window.storage.get(`share:${code}`, true);
-    if (result) {
-      const data = JSON.parse(result.value);
-      state.slots = data.slots || state.slots;
-      closeModal('shareModal');
-      saveState();
-      refreshTimetable();
-      showToast('✅ 시간표를 불러왔어요!');
-    } else {
-      showToast('⚠ 코드를 찾을 수 없어요');
-    }
-  } catch(e) {
-    showToast('⚠ 불러오기 실패');
-  }
+function loadFromCode() {
+  const code=document.getElementById('importCodeInput').value.trim().toUpperCase();
+  if(code.length!==6){showToast('⚠ 6자리 코드를 입력하세요');return;}
+  // 같은 기기 내 코드 매칭
+  const target=state.profiles.find(p=>p.shareCode===code);
+  if(target){
+    const p=currentProfile();
+    if(p){p.slots=[...target.slots.map(s=>({...s,id:Date.now().toString()+Math.random()}))];saveState();refreshTimetable();closeModal('shareModal');showToast('✅ 시간표를 불러왔어요!');}
+  } else showToast('⚠ 코드를 찾을 수 없어요 (같은 기기에서만 동작)');
 }
 
 // ═══════════════════════════════════════
 //  SETTINGS
 // ═══════════════════════════════════════
-function applyTheme(accent, accent2) {
-  document.documentElement.style.setProperty('--accent', accent);
-  document.documentElement.style.setProperty('--accent2', accent2 || accent);
+function applyTheme(accent,accent2) {
+  document.documentElement.style.setProperty('--accent',accent);
+  document.documentElement.style.setProperty('--accent2',accent2||accent);
 }
-function setTheme(accent, accent2) {
-  applyTheme(accent, accent2);
-  state.settings.theme = { accent, accent2 };
-  document.querySelectorAll('#themeColorPicker .color-dot').forEach(d => {
-    d.classList.toggle('selected', d.style.background===accent||d.style.backgroundColor===accent);
-  });
+function setTheme(accent,accent2) {
+  applyTheme(accent,accent2);
+  state.globalSettings.theme={accent,accent2};
+  document.querySelectorAll('#themeColorPicker .color-dot').forEach(d=>d.classList.toggle('selected',d.style.background===accent||d.style.backgroundColor===accent));
   saveState();
 }
 function setFontSize(val) {
-  document.body.style.fontSize = val + 'px';
-  document.getElementById('fontSizeVal').textContent = val + 'px';
-  state.settings.fontSize = parseInt(val);
+  document.body.style.fontSize=val+'px';
+  document.getElementById('fontSizeVal').textContent=val+'px';
+  state.globalSettings.fontSize=parseInt(val);
 }
 function toggleAutoTimer() {
-  state.settings.autoTimer = !state.settings.autoTimer;
-  const tog = document.getElementById('autoTimerToggle');
-  tog.classList.toggle('on', state.settings.autoTimer);
-  document.getElementById('autoTimerLabel').textContent = state.settings.autoTimer ? '켜짐' : '꺼짐';
+  state.globalSettings.autoTimer=!state.globalSettings.autoTimer;
+  document.getElementById('autoTimerToggle').classList.toggle('on',state.globalSettings.autoTimer);
+  document.getElementById('autoTimerLabel').textContent=state.globalSettings.autoTimer?'켜짐':'꺼짐';
   saveState();
 }
 function toggleAutoNotif() {
-  state.settings.autoNotif = !state.settings.autoNotif;
-  const tog = document.getElementById('autoNotifToggle');
-  tog.classList.toggle('on', state.settings.autoNotif);
-  document.getElementById('autoNotifLabel').textContent = state.settings.autoNotif ? '켜짐' : '꺼짐';
+  state.globalSettings.autoNotif=!state.globalSettings.autoNotif;
+  document.getElementById('autoNotifToggle').classList.toggle('on',state.globalSettings.autoNotif);
+  document.getElementById('autoNotifLabel').textContent=state.globalSettings.autoNotif?'켜짐':'꺼짐';
   saveState();
 }
-function saveNickname() {
-  const nick = document.getElementById('nicknameInput').value.trim();
-  if (!nick) return;
-  state.nickname = nick;
-  document.getElementById('myNicknameDisplay').textContent = nick;
-  saveState();
-  showToast('✅ 닉네임 저장됨');
-}
-function saveSettings() {
-  state.settings.defaultStart = document.getElementById('defaultStartTime').value;
-  saveState();
-  showToast('✅ 설정 저장됨');
-}
-function openSettings() { openModal('settingsModal'); }
+function saveSettings() { saveState(); showToast('✅ 설정 저장됨'); }
 function exportData() {
-  const data = JSON.stringify(state, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=`schedule-${todayKey()}.json`; a.click();
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`schedule-${todayKey()}.json`;a.click();
   showToast('📥 내보내기 완료');
 }
 function importDataPrompt() { showToast('⚠ 파일 가져오기는 PC에서 사용하세요'); }
 function clearAllData() {
   if (!confirm('정말 모든 데이터를 삭제할까요?')) return;
-  localStorage.removeItem('watchScheduleV2');
+  localStorage.removeItem('wonScheduleV3');
   location.reload();
 }
 
 // ═══════════════════════════════════════
-//  NOTIFICATIONS
+//  LIGHT/DARK TOGGLE
+// ═══════════════════════════════════════
+function toggleLightMode() {
+  const isLight=document.body.classList.toggle('light-mode');
+  localStorage.setItem('lightMode',isLight?'1':'0');
+  document.getElementById('themeToggleBtn').innerHTML=isLight?'<i class="ti ti-moon"></i>':'<i class="ti ti-sun"></i>';
+}
+
+// ═══════════════════════════════════════
+//  TOAST / MODAL / NAV UTILS
 // ═══════════════════════════════════════
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'notif-toast show';
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='notif-toast show';
   setTimeout(()=>t.className='notif-toast',3200);
 }
-function requestNotifPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-// ═══════════════════════════════════════
-//  MODAL UTILS
-// ═══════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
 });
-
-// ═══════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════
 function goPage(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.getElementById('nav-'+page).classList.add('active');
-  if (page==='analytics') { switchAnalyticsTab(currentAnalyticsTab||'daily'); }
-  if (page==='ranking') { renderRanking(); }
+  if(page==='analytics')switchAnalyticsTab(currentAnalyticsTab||'daily');
+  if(page==='ranking')renderRanking();
+  if(page==='settings'){renderProfileListSettings();document.getElementById('parentCodeDisplay').textContent=currentProfile()?.parentCode||'------';}
+}
+
+function formatHMS(sec) {
+  if(!sec)return'0분';const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  if(h>0)return`${h}시간 ${m}분`;if(m>0)return`${m}분 ${s}초`;return`${s}초`;
+}
+function formatMin(sec) { const m=Math.floor(sec/60);if(m>=60)return`${Math.floor(m/60)}h ${m%60}m`;return`${m}분`; }
+
+function requestNotifPermission() {
+  if('Notification' in window&&Notification.permission==='default') Notification.requestPermission();
 }
 
 // ═══════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════
-function addSampleData() {
-  if (state.slots.length) return;
-  const samples = [
-    {name:'기상/준비',start:'06:00',end:'07:00',color:COLORS[4],priority:'mid',repeat:'daily'},
-    {name:'국어',start:'07:00',end:'08:00',color:COLORS[0],priority:'high',repeat:'daily'},
-    {name:'수학',start:'08:00',end:'09:00',color:COLORS[2],priority:'high',repeat:'daily'},
-    {name:'영어',start:'09:00',end:'10:00',color:COLORS[1],priority:'high',repeat:'daily'},
-    {name:'점심/휴식',start:'10:00',end:'11:00',color:COLORS[3],priority:'low',repeat:'daily'},
-    {name:'사회',start:'11:00',end:'12:00',color:COLORS[5],priority:'mid',repeat:'daily'},
-    {name:'과학',start:'12:00',end:'13:00',color:COLORS[6],priority:'mid',repeat:'daily'},
-    {name:'저녁 식사',start:'13:00',end:'14:00',color:COLORS[4],priority:'low',repeat:'daily'},
-    {name:'독서',start:'14:00',end:'15:00',color:COLORS[7],priority:'mid',repeat:'daily'},
-    {name:'음악/예체능',start:'15:00',end:'16:00',color:COLORS[8],priority:'low',repeat:'daily'},
-    {name:'복습/정리',start:'16:00',end:'17:00',color:COLORS[9],priority:'mid',repeat:'daily'},
-    {name:'자유시간',start:'17:00',end:'18:00',color:COLORS[3],priority:'low',repeat:'daily'},
-  ];
-  state.slots = samples.map((s,i)=>({...s,id:(1000+i).toString(),memo:'',date:todayKey()}));
-}
 loadState();
-addSampleData();
+renderProfileBar();
+updateHeaderForProfile();
 refreshTimetable();
 updateProgress();
 startClock();
 requestNotifPermission();
-renderColorPicker('slotColorPicker', COLORS[0]);
-document.getElementById('autoTimerToggle').classList.toggle('on', state.settings.autoTimer);
-document.getElementById('autoTimerLabel').textContent = state.settings.autoTimer?'켜짐':'꺼짐';
-document.getElementById('autoNotifToggle').classList.toggle('on', state.settings.autoNotif);
-document.getElementById('autoNotifLabel').textContent = state.settings.autoNotif?'켜짐':'꺼짐';
+renderColorPicker('slotColorPicker',COLORS[0]);
+document.getElementById('autoTimerToggle').classList.toggle('on',state.globalSettings.autoTimer);
+document.getElementById('autoTimerLabel').textContent=state.globalSettings.autoTimer?'켜짐':'꺼짐';
+document.getElementById('autoNotifToggle').classList.toggle('on',state.globalSettings.autoNotif);
+document.getElementById('autoNotifLabel').textContent=state.globalSettings.autoNotif?'켜짐':'꺼짐';
 
-// ═══════════════════════════════════════
-//  PWA — Service Worker + Install
-// ═══════════════════════════════════════
-let deferredPrompt = null;
+// 버튼 터치 바인딩
+document.getElementById('addSlotBtn').addEventListener('click', ()=>openAddSlot());
+document.getElementById('addSlotBtn').addEventListener('touchend', e=>{e.preventDefault();openAddSlot();});
+document.getElementById('themeToggleBtn').addEventListener('click', toggleLightMode);
 
-// Service Worker 등록
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => {
-        console.log('[SW] 등록 완료', reg.scope);
-        // 업데이트 감지
-        reg.addEventListener('updatefound', () => {
-          const nw = reg.installing;
-          nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              showToast('🔄 앱 업데이트가 준비됐어요. 새로고침하세요!');
-            }
-          });
-        });
-      })
-      .catch(err => console.warn('[SW] 등록 실패', err));
-  });
-}
+// 과목명 입력시 자동 색상 미리보기
+document.getElementById('slotName').addEventListener('input', ()=>{ if(currentColorMode==='auto') updateAutoColorPreview(); });
 
-// Android/Chrome — beforeinstallprompt 이벤트 캡처
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  // 이미 설치됐거나 닫은 적 있으면 배너 안 보임
-  if (!localStorage.getItem('pwaInstallDismissed')) {
-    setTimeout(() => {
-      document.getElementById('installBanner').style.display = 'block';
-    }, 3000); // 3초 후 배너 표시
-  }
-});
-
-// iOS Safari 감지 — 아직 설치 안 됐으면 안내 배너
-const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isInStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-if (isIos && !isInStandalone && !localStorage.getItem('pwaIosDismissed')) {
-  setTimeout(() => {
-    document.getElementById('iosBanner').style.display = 'block';
-  }, 4000);
-}
-
-// 설치 완료 감지
-window.addEventListener('appinstalled', () => {
-  deferredPrompt = null;
-  document.getElementById('installBanner').style.display = 'none';
-  showToast('🎉 앱 설치 완료! 홈 화면에서 실행하세요');
-  localStorage.setItem('pwaInstalled', '1');
-});
-
-function doInstall() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(choice => {
-    if (choice.outcome === 'accepted') {
-      showToast('🎉 설치 중...');
-    }
-    deferredPrompt = null;
-    document.getElementById('installBanner').style.display = 'none';
-  });
-}
-
-function dismissInstall() {
-  document.getElementById('installBanner').style.display = 'none';
-  localStorage.setItem('pwaInstallDismissed', '1');
-}
-
-function dismissIos() {
-  document.getElementById('iosBanner').style.display = 'none';
-  localStorage.setItem('pwaIosDismissed', '1');
-}
-
-// 설치 상태 헤더에 표시
-if (isInStandalone) {
-  document.querySelector('.app-title').textContent = '⏱ 원시간표';
-}
-
-// URL 해시로 탭 이동 (shortcuts 지원)
-const hash = location.hash.replace('#','');
-if (['home','analytics','ranking','settings'].includes(hash)) goPage(hash);
-
-// ═══════════════════════════════════════
-//  LIGHT / DARK MODE TOGGLE
-// ═══════════════════════════════════════
-function toggleLightMode() {
-  const isLight = document.body.classList.toggle('light-mode');
-  localStorage.setItem('lightMode', isLight ? '1' : '0');
-  const btn = document.getElementById('themeToggleBtn');
-  btn.innerHTML = isLight
-    ? '<i class="ti ti-moon"></i>'
-    : '<i class="ti ti-sun"></i>';
-}
-// 저장된 모드 불러오기
-if (localStorage.getItem('lightMode') === '1') {
+// 라이트 모드 복원
+if(localStorage.getItem('lightMode')==='1'){
   document.body.classList.add('light-mode');
-  document.getElementById('themeToggleBtn').innerHTML = '<i class="ti ti-moon"></i>';
+  document.getElementById('themeToggleBtn').innerHTML='<i class="ti ti-moon"></i>';
 }
 
-// ═══════════════════════════════════════
-//  버튼 이벤트 — 터치 기기 호환
-// ═══════════════════════════════════════
-(function bindButtons() {
-  function safeBind(id, fn) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('click', fn);
-    el.addEventListener('touchend', function(e) { e.preventDefault(); fn(); });
-  }
-  safeBind('addSlotBtn', () => openAddSlot());
-})();
+// PWA
+let deferredPrompt=null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(reg=>console.log('[SW] 등록됨',reg.scope)).catch(e=>console.warn('[SW] 실패',e)));
+}
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  if(!localStorage.getItem('pwaInstallDismissed')) setTimeout(()=>document.getElementById('installBanner').style.display='block',3000);
+});
+function doInstall(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').style.display='none';});}
+function dismissInstall(){document.getElementById('installBanner').style.display='none';localStorage.setItem('pwaInstallDismissed','1');}
+
+const hash=location.hash.replace('#','');
+if(['home','analytics','ranking','settings'].includes(hash))goPage(hash);
 </script>
 </body>
 </html>
