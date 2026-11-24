@@ -121,6 +121,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .wtitle{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
 .clkbig{font-size:36px;font-weight:800;color:var(--accent2);font-variant-numeric:tabular-nums;letter-spacing:-2px;line-height:1;}
 .clkdate{font-size:11px;color:var(--text2);margin-top:4px;}
+.clk-mode-row{display:flex;gap:5px;margin-bottom:8px;}
+.clk-mode-btn{font-size:10px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;transition:.2s;}
+.clk-mode-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .ringwrap{display:flex;align-items:center;gap:10px;}
 .mring{position:relative;width:60px;height:60px;flex-shrink:0;}
 .mring svg{transform:rotate(-90deg);}
@@ -797,8 +800,82 @@ function rWidgets(){
   el.innerHTML='';el.appendChild(g);
   updProg();
 }
+let widgetClockMode='digital'; // 'digital' | 'analog'
+function swClkMode(m){
+  widgetClockMode=m;
+  document.getElementById('wclkm-dig').classList.toggle('on',m==='digital');
+  document.getElementById('wclkm-ana').classList.toggle('on',m==='analog');
+  rWidgetClock();
+}
+function rWidgetClock(){
+  const now=new Date();
+  const wrap=document.getElementById('wclk-inner');
+  if(!wrap)return;
+  if(widgetClockMode==='digital'){
+    wrap.innerHTML=`<div class="clkbig" id="wclk">${now.toLocaleTimeString('ko-KR',{hour12:false})}</div><div class="clkdate" id="wdate">${now.toLocaleDateString('ko-KR',{weekday:'short',month:'long',day:'numeric'})}</div>`;
+  } else {
+    wrap.innerHTML=buildAnalogClock(now);
+  }
+}
+function buildAnalogClock(now){
+  const W=120,CX=60,CY=60,R=56;
+  const h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+  const hAng=(h/12+m/720)*360-90;
+  const mAng=(m/60+s/3600)*360-90;
+  const sAng=(s/60)*360-90;
+  const deg2rad=d=>d*Math.PI/180;
+  const hx=CX+32*Math.cos(deg2rad(hAng)),hy=CY+32*Math.sin(deg2rad(hAng));
+  const mx=CX+44*Math.cos(deg2rad(mAng)),my=CY+44*Math.sin(deg2rad(mAng));
+  const sx=CX+50*Math.cos(deg2rad(sAng)),sy=CY+50*Math.sin(deg2rad(sAng));
+  // 눈금
+  let marks='';
+  for(let i=0;i<60;i++){
+    const a=i*6-90,r=deg2rad(a),isMaj=i%5===0;
+    const r1=isMaj?R-8:R-5,r2=R;
+    marks+=`<line x1="${CX+r1*Math.cos(r)}" y1="${CY+r1*Math.sin(r)}" x2="${CX+r2*Math.cos(r)}" y2="${CY+r2*Math.sin(r)}" stroke="${isMaj?'var(--accent2)':'rgba(108,99,255,0.25)'}" stroke-width="${isMaj?2:1}"/>`;
+  }
+  // 숫자
+  let nums='';
+  [12,3,6,9].forEach((n,i)=>{
+    const a=i*90-90,r=deg2rad(a),rx=CX+(R-16)*Math.cos(r),ry=CY+(R-16)*Math.sin(r);
+    nums+=`<text x="${rx}" y="${ry}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="800" fill="var(--accent2)">${n}</text>`;
+  });
+  const hStr=String(now.getHours()).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  const sStr=String(s).padStart(2,'0');
+  return`<svg id="analog-clk" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" style="display:block;margin:0 auto">
+    <defs><radialGradient id="abg" cx="40%" cy="35%"><stop offset="0%" stop-color="var(--bg2)"/><stop offset="100%" stop-color="var(--bg3)"/></radialGradient></defs>
+    <circle cx="${CX}" cy="${CY}" r="${R+2}" fill="url(#abg)" stroke="var(--border)" stroke-width="2"/>
+    ${marks}${nums}
+    <!-- 시침 -->
+    <line id="clk-h" x1="${CX}" y1="${CY}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="var(--accent2)" stroke-width="4" stroke-linecap="round"/>
+    <!-- 분침 -->
+    <line id="clk-m" x1="${CX}" y1="${CY}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- 초침 -->
+    <line id="clk-s" x1="${CX}" y1="${CY}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="#e11d48" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="${CX}" cy="${CY}" r="4" fill="var(--accent)"/>
+    <circle cx="${CX}" cy="${CY}" r="2" fill="white"/>
+    <!-- 디지털 보조 -->
+    <text id="clk-dig" x="${CX}" y="${CY+36}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--accent2)" font-family="monospace">${hStr}</text>
+    <text id="clk-sec" x="${CX}" y="${CY+47}" text-anchor="middle" font-size="8" fill="var(--text2)" font-family="monospace">${sStr}초</text>
+  </svg><div class="clkdate" id="wdate" style="text-align:center;margin-top:4px">${now.toLocaleDateString('ko-KR',{weekday:'short',month:'long',day:'numeric'})}</div>`;
+}
 function wHTML(w){
-  if(w.id==='clock')return`<div class="widget wclk"><div class="wtitle">🕐 시계</div><div class="clkbig" id="wclk">${new Date().toLocaleTimeString('ko-KR',{hour12:false})}</div><div class="clkdate" id="wdate">${new Date().toLocaleDateString('ko-KR',{weekday:'short',month:'short',day:'numeric'})}</div></div>`;
+  if(w.id==='clock'){
+    const now=new Date();
+    const inner=widgetClockMode==='digital'
+      ?`<div class="clkbig" id="wclk">${now.toLocaleTimeString('ko-KR',{hour12:false})}</div><div class="clkdate" id="wdate">${now.toLocaleDateString('ko-KR',{weekday:'short',month:'long',day:'numeric'})}</div>`
+      :buildAnalogClock(now);
+    return`<div class="widget wclk">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="wtitle" style="margin-bottom:0">🕐 시계</div>
+        <div style="display:flex;gap:4px">
+          <div class="clk-mode-btn${widgetClockMode==='digital'?' on':''}" id="wclkm-dig" onclick="swClkMode('digital')">디지털</div>
+          <div class="clk-mode-btn${widgetClockMode==='analog'?' on':''}" id="wclkm-ana" onclick="swClkMode('analog')">아날로그</div>
+        </div>
+      </div>
+      <div id="wclk-inner">${inner}</div>
+    </div>`;
+  }
   if(w.id==='progress'){
     return`<div class="widget"><div class="wtitle">📊 오늘 달성률</div><div class="ringwrap"><div class="mring"><svg viewBox="0 0 60 60" width="60" height="60"><circle class="rbg" cx="30" cy="30" r="23"/><circle class="rfill" id="mring" cx="30" cy="30" r="23" stroke-dasharray="144.5" stroke-dashoffset="144.5"/></svg><div class="rinner" id="mringpct">0%</div></div><div class="rstats"><div class="rstat"><span class="rslabel">완료</span><span style="font-weight:700;color:var(--green)" id="wdone">0</span></div><div class="rstat"><span class="rslabel">미달성</span><span style="font-weight:700;color:var(--red)" id="wmiss">0</span></div><div class="rstat"><span class="rslabel">남은</span><span style="font-weight:700;color:var(--yellow)" id="wrem">0</span></div></div></div></div>`;
   }
@@ -1233,8 +1310,28 @@ function clearAll(){if(!confirm('모든 데이터를 삭제할까요?'))return;l
 // TICK
 function tick(){
   const now=new Date();
-  const cl=document.getElementById('wclk');if(cl)cl.textContent=now.toLocaleTimeString('ko-KR',{hour12:false});
-  const dl=document.getElementById('wdate');if(dl)dl.textContent=now.toLocaleDateString('ko-KR',{weekday:'short',month:'short',day:'numeric'});
+  if(widgetClockMode==='digital'){
+    const cl=document.getElementById('wclk');if(cl)cl.textContent=now.toLocaleTimeString('ko-KR',{hour12:false});
+    const dl=document.getElementById('wdate');if(dl)dl.textContent=now.toLocaleDateString('ko-KR',{weekday:'short',month:'long',day:'numeric'});
+  } else {
+    // 아날로그 시계 바늘 실시간 갱신
+    const h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+    const hAng=(h/12+m/720)*360-90;
+    const mAng=(m/60+s/3600)*360-90;
+    const sAng=(s/60)*360-90;
+    const deg2rad=d=>d*Math.PI/180;
+    const CX=60,CY=60;
+    const hEl=document.getElementById('clk-h');
+    const mEl=document.getElementById('clk-m');
+    const sEl=document.getElementById('clk-s');
+    const dEl=document.getElementById('clk-dig');
+    const secEl=document.getElementById('clk-sec');
+    if(hEl){const hx=CX+32*Math.cos(deg2rad(hAng)),hy=CY+32*Math.sin(deg2rad(hAng));hEl.setAttribute('x2',hx.toFixed(1));hEl.setAttribute('y2',hy.toFixed(1));}
+    if(mEl){const mx=CX+44*Math.cos(deg2rad(mAng)),my=CY+44*Math.sin(deg2rad(mAng));mEl.setAttribute('x2',mx.toFixed(1));mEl.setAttribute('y2',my.toFixed(1));}
+    if(sEl){const sx=CX+50*Math.cos(deg2rad(sAng)),sy=CY+50*Math.sin(deg2rad(sAng));sEl.setAttribute('x2',sx.toFixed(1));sEl.setAttribute('y2',sy.toFixed(1));}
+    if(dEl)dEl.textContent=String(now.getHours()).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    if(secEl)secEl.textContent=String(s).padStart(2,'0')+'초';
+  }
   if(curView==='home'){
     updNow();updProg();
     // 워치형 모드: 디지털시계 실시간 업데이트
