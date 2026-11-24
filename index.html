@@ -509,6 +509,94 @@ function rHome(){
   updNow();rWidgets();rTodayList();rHomeTT();rUpcoming();
   document.getElementById('todaylabel').textContent=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
 }
+function makeClock(es, SH, EH, label, now){
+  // SH~EH 12시간 원형 시계 SVG 반환
+  const W=170,CX=85,CY=85,R=75,RI=36;
+  const TOTAL=(EH-SH)*60;
+  const deg2rad=d=>d*Math.PI/180;
+  const minToAngle=m=>(m/TOTAL)*360-90;
+  const nowMin=(now.getHours()-SH)*60+now.getMinutes();
+  const isCurrentClock=now.getHours()>=SH&&now.getHours()<EH;
+  // 배경 그라데이션 색
+  const bgGrad=SH<12
+    ?'<defs><radialGradient id="bgAM" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fffde7"/><stop offset="100%" stop-color="#fff8e1"/></radialGradient></defs>'
+    :'<defs><radialGradient id="bgPM" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#e8eaf6"/><stop offset="100%" stop-color="#ede7f6"/></radialGradient></defs>';
+  const bgId=SH<12?'bgAM':'bgPM';
+  // 슬라이스
+  function arc(sm,em,color,clickId){
+    const clampS=Math.max(0,sm),clampE=Math.min(TOTAL,em);
+    if(clampE<=clampS)return'';
+    const sa=minToAngle(clampS),ea=minToAngle(clampE);
+    const r2=RI+2;
+    const x1=CX+R*Math.cos(deg2rad(sa)),y1=CY+R*Math.sin(deg2rad(sa));
+    const x2=CX+R*Math.cos(deg2rad(ea)),y2=CY+R*Math.sin(deg2rad(ea));
+    const ix1=CX+r2*Math.cos(deg2rad(ea)),iy1=CY+r2*Math.sin(deg2rad(ea));
+    const ix2=CX+r2*Math.cos(deg2rad(sa)),iy2=CY+r2*Math.sin(deg2rad(sa));
+    const large=(clampE-clampS)/TOTAL*360>180?1:0;
+    return`<path d="M${x1},${y1} A${R},${R},0,${large},1,${x2},${y2} L${ix1},${iy1} A${r2},${r2},0,${large},0,${ix2},${iy2} Z" fill="${color}" opacity=".9" style="cursor:pointer" onclick="showEv('${clickId}')"/>`;
+  }
+  // 텍스트 레이블
+  function sliceText(sm,em,name){
+    const clampS=Math.max(0,sm),clampE=Math.min(TOTAL,em);
+    const dur=clampE-clampS; if(dur<25)return'';
+    const midMin=(clampS+clampE)/2;
+    const midAng=minToAngle(midMin);
+    const r2=deg2rad(midAng);
+    const tr=(RI+2+R)/2;
+    const tx=CX+tr*Math.cos(r2),ty=CY+tr*Math.sin(r2);
+    const rot=midAng+90;
+    const n=name.length>4?name.substring(0,3)+'…':name;
+    return`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="${dur>=60?9:8}" font-weight="700" fill="white" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))">${n}</text>`;
+  }
+  // 눈금 & 시간 레이블 (12시간 표시)
+  let ticks='',lbls='';
+  for(let h=SH;h<=EH;h++){
+    const m=(h-SH)*60;
+    if(m>TOTAL)break;
+    const ang=minToAngle(m),r2=deg2rad(ang);
+    const isMaj=(h-SH)%3===0||(h===SH)||(h===EH);
+    const tlen=isMaj?8:4;
+    ticks+=`<line x1="${CX+(RI+2)*Math.cos(r2)}" y1="${CY+(RI+2)*Math.sin(r2)}" x2="${CX+(R-tlen)*Math.cos(r2)}" y2="${CY+(R-tlen)*Math.sin(r2)}" stroke="rgba(60,40,120,0.18)" stroke-width="${isMaj?1.2:0.6}"/>`;
+    if(isMaj&&m<=TOTAL){
+      const disp=h>12?h-12:(h===0?12:h);
+      const lr=R+10,lx=CX+lr*Math.cos(r2),ly=CY+lr*Math.sin(r2);
+      lbls+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="rgba(80,60,160,0.65)" font-weight="700">${disp}</text>`;
+    }
+  }
+  const slices=es.map(e=>{
+    const sm=h2m(e.start)-SH*60,em=h2m(e.end)-SH*60;
+    return arc(sm,em,e.color||'#6c63ff',e.id);
+  }).join('');
+  const texts=es.map(e=>{
+    const sm=h2m(e.start)-SH*60,em=h2m(e.end)-SH*60;
+    return sliceText(sm,em,e.name);
+  }).join('');
+  // 현재 시간 바늘
+  const needle=isCurrentClock&&nowMin>=0&&nowMin<=TOTAL
+    ?`<line x1="${CX}" y1="${CY}" x2="${CX+R*Math.cos(deg2rad(minToAngle(nowMin)))}" y2="${CY+R*Math.sin(deg2rad(minToAngle(nowMin)))}" stroke="#e11d48" stroke-width="2.2" stroke-linecap="round"/><circle cx="${CX}" cy="${CY}" r="4" fill="#e11d48"/><circle cx="${CX}" cy="${CY}" r="1.5" fill="white"/>`
+    :'<circle cx="'+CX+'" cy="'+CY+'" r="3" fill="rgba(100,80,200,0.3)"/>';
+  // 중앙 텍스트
+  const curEv=isCurrentClock?es.find(e=>{const sm=h2m(e.start),em2=h2m(e.end),nm=now.getHours()*60+now.getMinutes();return nm>=sm&&nm<em2;}):null;
+  const centerTxt=curEv
+    ?`<text x="${CX}" y="${CY-7}" text-anchor="middle" font-size="8" font-weight="800" fill="#5a52e0">${curEv.name.substring(0,5)}</text><text x="${CX}" y="${CY+6}" text-anchor="middle" font-size="7" fill="#9990b8">~${curEv.end}</text>`
+    :`<text x="${CX}" y="${CY+3}" text-anchor="middle" font-size="10" font-weight="800" fill="rgba(90,82,224,0.5)">${label}</text>`;
+  return`<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div style="font-size:11px;font-weight:800;color:var(--accent2);letter-spacing:.5px">${label}</div>
+    <div style="border-radius:50%;box-shadow:0 4px 20px rgba(108,99,255,0.18),0 1px 4px rgba(0,0,0,0.08);overflow:visible;background:white;border:2.5px solid rgba(108,99,255,0.18)">
+      <svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">
+        ${bgGrad}
+        <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#${bgId})"/>
+        ${slices}
+        ${texts}
+        ${ticks}${lbls}
+        <circle cx="${CX}" cy="${CY}" r="${RI}" fill="white" stroke="rgba(108,99,255,0.1)" stroke-width="1"/>
+        ${centerTxt}
+        ${needle}
+      </svg>
+    </div>
+  </div>`;
+}
+
 function rHomeTT(){
   const el=document.getElementById('hometimetable');
   const lbl=document.getElementById('ttlabel2');
@@ -516,88 +604,19 @@ function rHomeTT(){
   const es=getDayEvs(tstr()).filter(e=>e.start&&e.end);
   if(lbl)lbl.textContent=now.toLocaleDateString('ko-KR',{weekday:'long'});
   if(!es.length){el.innerHTML='<div class="empty" style="padding:10px 0;font-size:12px"><i class="ti ti-calendar-off"></i> 오늘 시간표가 없어요</div>';return;}
-  // 원형 시계 시간표 (스마트워치 스타일)
-  const W=300,CX=150,CY=150,R=120,RI=65,RTEXT=100;
-  const SH=5,EH=23,TOTAL=(EH-SH)*60; // 05:00 ~ 23:00 = 18h
-  const nowMin=(now.getHours()-SH)*60+now.getMinutes();
-  const deg2rad=d=>d*Math.PI/180;
-  const minToAngle=m=>(m/TOTAL)*360-90; // -90 = 12시 방향 시작
-  function arc(cx,cy,r,startMin,endMin,color,inner,clickId){
-    const sa=minToAngle(startMin),ea=minToAngle(endMin);
-    const r2=inner||RI+4;
-    const x1=cx+r*Math.cos(deg2rad(sa)),y1=cy+r*Math.sin(deg2rad(sa));
-    const x2=cx+r*Math.cos(deg2rad(ea)),y2=cy+r*Math.sin(deg2rad(ea));
-    const ix1=cx+r2*Math.cos(deg2rad(ea)),iy1=cy+r2*Math.sin(deg2rad(ea));
-    const ix2=cx+r2*Math.cos(deg2rad(sa)),iy2=cy+r2*Math.sin(deg2rad(sa));
-    const large=(endMin-startMin)/TOTAL*360>180?1:0;
-    return`<path d="M${x1},${y1} A${r},${r},0,${large},1,${x2},${y2} L${ix1},${iy1} A${r2},${r2},0,${large},0,${ix2},${iy2} Z" fill="${color}" opacity=".92" style="cursor:pointer" onclick="showEv('${clickId}')"><title>${''}</title></path>`;
-  }
-  // 눈금선 & 시간 레이블
-  let ticks='',labels='';
-  for(let h=SH;h<EH;h++){
-    const m=(h-SH)*60,ang=minToAngle(m),r2=deg2rad(ang);
-    const isMaj=h%3===0;
-    const r3=isMaj?R-2:R-5;
-    ticks+=`<line x1="${CX+RI*Math.cos(r2)}" y1="${CY+RI*Math.sin(r2)}" x2="${CX+r3*Math.cos(r2)}" y2="${CY+r3*Math.sin(r2)}" stroke="rgba(0,0,0,0.12)" stroke-width="${isMaj?1.5:0.7}"/>`;
-    if(isMaj){
-      const lr=R+13,lx=CX+lr*Math.cos(r2),ly=CY+lr*Math.sin(r2);
-      labels+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="var(--text3)" font-weight="600">${h}</text>`;
-    }
-  }
-  // 현재 시간 바늘
-  const nowAng=minToAngle(Math.max(0,Math.min(nowMin,TOTAL)));
-  const nrad=deg2rad(nowAng);
-  const needleLine=nowMin>=0&&nowMin<=TOTAL?`<line x1="${CX}" y1="${CY}" x2="${CX+R*Math.cos(nrad)}" y2="${CY+R*Math.sin(nrad)}" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/><circle cx="${CX}" cy="${CY}" r="4" fill="var(--red)"/>`:'' ;
-  // 슬라이스 그리기
-  const slices=es.map(e=>{
-    const sm=h2m(e.start)-SH*60,em=h2m(e.end)-SH*60;
-    if(em<=0||sm>=TOTAL)return'';
-    const clampS=Math.max(0,sm),clampE=Math.min(TOTAL,em);
-    if(clampE<=clampS)return'';
-    return arc(CX,CY,R,clampS,clampE,e.color||'#6c63ff',null,e.id);
-  }).join('');
-  // 텍스트 레이블 (큰 호에만)
-  const textLabels=es.map(e=>{
-    const sm=h2m(e.start)-SH*60,em=h2m(e.end)-SH*60;
-    const dur=em-sm;if(dur<30)return''; // 너무 짧으면 생략
-    const midMin=(Math.max(0,sm)+Math.min(TOTAL,em))/2;
-    const midAng=minToAngle(midMin);
-    const r2=deg2rad(midAng);
-    const tr=(RI+R)/2;
-    const tx=CX+tr*Math.cos(r2),ty=CY+tr*Math.sin(r2);
-    // 텍스트 회전: 호의 접선 방향
-    const rot=midAng+90;
-    const name=e.name.length>5?e.name.substring(0,4)+'…':e.name;
-    return`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="${dur>=60?10:9}" font-weight="700" fill="white" transform="rotate(${rot},${tx},${ty})" style="pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.4)">${name}</text>`;
-  }).join('');
-  // 중앙 시계
-  const curEv=es.find(e=>{const sm=h2m(e.start),em=h2m(e.end),nm=now.getHours()*60+now.getMinutes();return nm>=sm&&nm<em;});
-  const centerText=curEv
-    ?`<text x="${CX}" y="${CY-10}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent2)">${curEv.name.length>6?curEv.name.substring(0,5)+'…':curEv.name}</text><text x="${CX}" y="${CY+7}" text-anchor="middle" font-size="10" fill="var(--text3)">~${curEv.end}</text>`
-    :`<text x="${CX}" y="${CY-6}" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent2)">${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}</text>`;
+  // 오전(0~12), 오후(12~24) — 12시간씩
+  const amEvs=es.filter(e=>h2m(e.start)<720); // ~12:00
+  const pmEvs=es.filter(e=>h2m(e.end)>720);   // 12:00~
+  const amSVG=makeClock(amEvs,0,12,'🌅 오전',now);
+  const pmSVG=makeClock(pmEvs,12,24,'🌇 오후',now);
   // 범례
-  const legend=es.map(e=>`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);flex:0 0 auto"><div style="width:8px;height:8px;border-radius:2px;background:${e.color||'#6c63ff'};flex-shrink:0"></div>${e.name}</div>`).join('');
+  const legend=es.map(e=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><div style="width:7px;height:7px;border-radius:2px;background:${e.color||'#6c63ff'};flex-shrink:0"></div>${e.name}</div>`).join('');
   el.innerHTML=`
-    <div style="position:relative;width:${W}px;height:${W}px;max-width:100%">
-      <svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" style="overflow:visible">
-        <!-- 배경 링 -->
-        <circle cx="${CX}" cy="${CY}" r="${R}" fill="var(--bg3)" stroke="var(--border2)" stroke-width="1.5"/>
-        <circle cx="${CX}" cy="${CY}" r="${RI}" fill="var(--bg2)"/>
-        <!-- 슬라이스 -->
-        ${slices}
-        <!-- 눈금 & 시간 -->
-        ${ticks}${labels}
-        <!-- 중앙 -->
-        ${centerText}
-        <!-- 현재 시간 바늘 -->
-        ${needleLine}
-      </svg>
-      <!-- 워치 외형 -->
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:4px 0">
+      ${amSVG}${pmSVG}
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;margin-top:12px;max-width:300px">${legend}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;margin-top:10px;max-width:360px;padding:0 4px">${legend}</div>
   `;
-  // 애니메이션: 슬라이스 등장
-  el.querySelectorAll('path').forEach((p,i)=>{p.style.opacity='0';p.style.transition=`opacity .3s ${i*0.05}s`;setTimeout(()=>p.style.opacity='.92',10);});
 }
 function updNow(){
   const now=new Date(),hmn=hm(now);
